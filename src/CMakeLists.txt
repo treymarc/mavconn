@@ -8,13 +8,6 @@ INCLUDE(BinaryUtilities)
 
 ############## MAVCONNConfig.h ##############
 
-# Check endianness
-INCLUDE(TestBigEndian)
-TEST_BIG_ENDIAN(MAVCONN_BIG_ENDIAN)
-IF(NOT MAVCONN_BIG_ENDIAN)
-  SET(MAVCONN_LITTLE_ENDIAN TRUE)
-ENDIF()
-
 # 32/64 bit system check
 IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   SET(MAVCONN_ARCH_64 TRUE)
