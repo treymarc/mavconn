@@ -53,31 +53,11 @@ FIND_PACKAGE(GLIB2     REQUIRED)
 FIND_PACKAGE(GTHREAD2  REQUIRED)
 FIND_PACKAGE(Threads   REQUIRED)
 FIND_PACKAGE(LCM       REQUIRED)
-FIND_PACKAGE(ROS)
 FIND_PACKAGE(GPS)
 FIND_PACKAGE(GLIBTOP)
-FIND_PACKAGE(RTI)
 FIND_PACKAGE(GLIBMM2)
 FIND_PACKAGE(SIGC++)
 FIND_PACKAGE(JPEG_TURBO)
 
-##### Boost #####
-# Expand the next statement if newer boost versions than 1.36.1 are released
-SET(Boost_ADDITIONAL_VERSIONS 1.37 1.37.0)
-
-FIND_PACKAGE(Boost 1.38 REQUIRED COMPONENTS filesystem program_options system thread)
-
-# MSVC seems to be the only compiler requiring date_time
-IF(MSVC)
-  FIND_PACKAGE(Boost 1.38 REQUIRED date_time)
-ENDIF(MSVC)
-
-# Boost 1.35 and newer also need the 'System' library
-IF(DEFINED Boost_VERSION AND NOT Boost_VERSION LESS 103500)
-  FIND_PACKAGE(Boost 1.38 REQUIRED system)
-ENDIF()
-
-# No auto linking, so this option is useless anyway
-MARK_AS_ADVANCED(Boost_LIB_DIAGNOSTIC_DEFINITIONS)
 
 

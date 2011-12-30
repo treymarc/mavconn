@@ -33,7 +33,6 @@ This file is part of the PIXHAWK project
 *
 */
 
-#include <boost/program_options.hpp>
 #include <boost/circular_buffer.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <glibmm.h>
@@ -47,6 +46,7 @@ This file is part of the PIXHAWK project
 
 bool verbose = false;
 bool emitDelay = false;
+int systemid = getSystemID();
 int compid = 2;
 std::string configFile;		///< Configuration file for parameters
 
@@ -77,8 +77,6 @@ Glib::Cond* messageQueueNotEmptyCond = 0;
 
 bool imageGrabbed = false;					//variable to check the validity of the imageGrabbed condition (guarded by imageGrabbed_mutex)
 bool processingDone = false;				//variable to check the validity of the processingDone condition (guarded by image_mutex)
-
-namespace config = boost::program_options;
 
 bool quit = false;
 
@@ -205,7 +203,7 @@ void cameraStereoGrab(PxStereoCameraPtr& pxStereoCam,
 
 int main(int argc, char* argv[])
 {
-	std::string camType;
+	static GString* camType = g_string_new("opencv");	///< host name for UDP server
 	std::string camOrientation;
 
 	uint32_t exposure;	///< Exposure in microseconds
@@ -220,39 +218,60 @@ int main(int argc, char* argv[])
 	uint64_t camSerial = 0;			///< Camera unique id, from hardware
 	uint64_t camSerialRight = 0;	///< Right camera unique id, from hardware (non-zero if stereo mode is activated)
 
-	bool detectHorizontal = false;
-	uint32_t detectThreshold = 75;
-
-	//========= Handling Program options =========
-	config::options_description desc("Allowed options");
-	desc.add_options()
-									("help", "produce help message")
-									("exposure,e", config::value<uint32_t>(&exposure)->default_value(2000), "Exposure in microseconds")
-									("gain,g", config::value<uint32_t>(&gain)->default_value(0), "Gain in FIXME")
-									("gamma", config::value<uint32_t>(&gamma)->default_value(0), "Gamma in FIXME")
-									("fps", config::value<float>(&frameRate)->default_value(60.0f), "Camera fps")
-									("trigger,t", config::bool_switch(&trigger)->default_value(false), "Enable hardware trigger (Firefly MV: INPUT: GPIO0, OUTPUT: GPIO2)")
-									("triggerslave", config::bool_switch(&triggerslave)->default_value(false), "Enable if another px_camera process is already controlling the imu trigger settings")
-									("automode,a", config::bool_switch(&automode)->default_value(false), "Enable auto brightness/gain/exposure/gamma")
-									("type", config::value<std::string>(&camType)->default_value("opencv"), "Camera type: {opencv|bluefox|firefly]")
-									("serial_right", config::value<uint64_t>(&camSerialRight)->default_value(0), "Enable stereo camera mode. Expects serial # of the right camera as argument. This will also enable (and only work with) the hardware trigger. Left cam is master.")
-									("serial", config::value<uint64_t>(&camSerial)->default_value(0), "Serial # of the camera to select")
-									("orientation", config::value<std::string>(&camOrientation)->default_value("downward"), "Orientation of camera: [downward|forward]")
-									("detectHorizontal,h", config::bool_switch(&detectHorizontal)->default_value(false), "Tries to detect horizontally scrambled images")
-									("detectThreshold,h", config::value<uint32_t>(&detectThreshold)->default_value(75), "Threshold for horizontal detector (Pixel count)")
-									("verbose,v", config::bool_switch(&verbose)->default_value(false), "Verbose output")
-									("delay", config::bool_switch(&emitDelay)->default_value(false), "emit Delays as debug message")
-									("config", config::value<std::string>(&configFile)->default_value("config/parameters_camera.cfg"), "Config file for parameters")
-									;
-	config::variables_map vm;
-	config::store(config::parse_command_line(argc, argv, desc), vm);
-	config::notify(vm);
-
-	if (vm.count("help"))
+	// Handling Program options
+	static GOptionEntry entries[] =
 	{
-		std::cout << desc << std::endl;
-		return 1;
+			{ "sysid", 'a', 0, G_OPTION_ARG_INT, &systemid, "ID of this system", NULL },
+			{ "compid", 'c', 0, G_OPTION_ARG_INT, &compid, "ID of this component", NULL },
+			{ "type", 't', 0, G_OPTION_ARG_STRING, camType, "Camera type (opencv|firefly)", camType->str },
+			{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
+			{ NULL }
+	};
+
+	GError *error = NULL;
+	GOptionContext *context;
+
+	context = g_option_context_new ("- open a camera and copy images onto shared memory interface");
+	g_option_context_add_main_entries (context, entries, NULL);
+	//g_option_context_add_group (context, NULL);
+	if (!g_option_context_parse (context, &argc, &argv, &error))
+	{
+		g_print ("Option parsing failed: %s\n", error->message);
+		exit (1);
 	}
+
+
+
+//	//========= Handling Program options =========
+//	config::options_description desc("Allowed options");
+//	desc.add_options()
+//									("help", "produce help message")
+//									("exposure,e", config::value<uint32_t>(&exposure)->default_value(2000), "Exposure in microseconds")
+//									("gain,g", config::value<uint32_t>(&gain)->default_value(0), "Gain in FIXME")
+//									("gamma", config::value<uint32_t>(&gamma)->default_value(0), "Gamma in FIXME")
+//									("fps", config::value<float>(&frameRate)->default_value(60.0f), "Camera fps")
+//									("trigger,t", config::bool_switch(&trigger)->default_value(false), "Enable hardware trigger (Firefly MV: INPUT: GPIO0, OUTPUT: GPIO2)")
+//									("triggerslave", config::bool_switch(&triggerslave)->default_value(false), "Enable if another px_camera process is already controlling the imu trigger settings")
+//									("automode,a", config::bool_switch(&automode)->default_value(false), "Enable auto brightness/gain/exposure/gamma")
+//									("type", config::value<std::string>(&camType)->default_value("opencv"), "Camera type: {opencv|bluefox|firefly]")
+//									("serial_right", config::value<uint64_t>(&camSerialRight)->default_value(0), "Enable stereo camera mode. Expects serial # of the right camera as argument. This will also enable (and only work with) the hardware trigger. Left cam is master.")
+//									("serial", config::value<uint64_t>(&camSerial)->default_value(0), "Serial # of the camera to select")
+//									("orientation", config::value<std::string>(&camOrientation)->default_value("downward"), "Orientation of camera: [downward|forward]")
+//									("detectHorizontal,h", config::bool_switch(&detectHorizontal)->default_value(false), "Tries to detect horizontally scrambled images")
+//									("detectThreshold,h", config::value<uint32_t>(&detectThreshold)->default_value(75), "Threshold for horizontal detector (Pixel count)")
+//									("verbose,v", config::bool_switch(&verbose)->default_value(false), "Verbose output")
+//									("delay", config::bool_switch(&emitDelay)->default_value(false), "emit Delays as debug message")
+//									("config", config::value<std::string>(&configFile)->default_value("config/parameters_camera.cfg"), "Config file for parameters")
+//									;
+//	config::variables_map vm;
+//	config::store(config::parse_command_line(argc, argv, desc), vm);
+//	config::notify(vm);
+//
+//	if (vm.count("help"))
+//	{
+//		std::cout << desc << std::endl;
+//		return 1;
+//	}
 
 	signal(SIGINT, signalHandler);
 
@@ -328,10 +347,10 @@ int main(int argc, char* argv[])
 	//========= Initialize capture devices =========
 	fprintf(stderr, "# INFO: Creating capture...\n");
 
-	PxCameraManagerPtr camManager = PxCameraManagerFactory::generate(camType);
+	PxCameraManagerPtr camManager = PxCameraManagerFactory::generate(camType->str);
 	if (camManager.get() == 0)
 	{
-		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose ONLY opencv.\n", camType.c_str());
+		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose ONLY opencv.\n", camType->str);
 		exit(EXIT_FAILURE);
 	}
 
@@ -376,7 +395,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (trigger && camType.compare("opencv") == 0)
+	if (trigger && std::string("opencv").compare(camType->str) == 0)
 	{
 		fprintf(stderr, "# ERROR: OpenCV camera does not support triggering.\n");
 		exit(EXIT_FAILURE);

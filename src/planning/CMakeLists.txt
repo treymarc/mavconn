@@ -4,14 +4,6 @@ INCLUDE_DIRECTORIES(
   ${GTHREAD2_MAIN_INCLUDE_DIR}
 )
 
-PIXHAWK_EXECUTABLE(mavconn-missionplanner mavconn-missionplanner.cc)
-PIXHAWK_LINK_LIBRARIES(mavconn-missionplanner
-  ${CXCORE_LIBRARY}
-  mavconn_lcm
-  lcm
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-)
-
 PIXHAWK_EXECUTABLE(mavconn-missionplanner-new mavconn-missionplanner-new.cc)
 PIXHAWK_LINK_LIBRARIES(mavconn-missionplanner-new
   ${CXCORE_LIBRARY}
@@ -19,5 +11,5 @@ PIXHAWK_LINK_LIBRARIES(mavconn-missionplanner-new
   ${GTHREAD2_LIBRARY}
   mavconn_lcm
   lcm
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  #${Boost_PROGRAM_OPTIONS_LIBRARY}
 )

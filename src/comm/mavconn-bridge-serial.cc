@@ -65,7 +65,6 @@ This file is part of the MAVCONN project
 #include "mavconn.h"
 #include <glib.h>
 
-namespace config = boost::program_options;
 using std::string;
 using namespace std;
 
@@ -77,7 +76,7 @@ int baud;                 ///< The serial baud rate
 int systemid = getSystemID();             ///< The unique system id of this MAV, 0-127. Has to be consistent across the system
 int compid = PX_COMP_ID_MAVLINK_BRIDGE_SERIAL;
 int serial_compid = 0;
-string port;              ///< The serial port name, e.g. /dev/ttyUSB0
+static GString* port = g_string_new("/dev/ttyUSB0");              ///< The serial port name, e.g. /dev/ttyUSB0
 bool silent;              ///< Wether console output should be enabled
 bool verbose;             ///< Enable verbose output
 bool emitHeartbeat;       ///< Generate a heartbeat with this process
@@ -262,12 +261,12 @@ bool setup_port(int fd, int baud, int data_bits, int stop_bits, bool parity, boo
 	struct termios  config;
 	if(!isatty(fd))
 	{
-		fprintf(stderr, "\nERROR: file descriptor %s is NOT a serial port\n", port.c_str());
+		fprintf(stderr, "\nERROR: file descriptor %s is NOT a serial port\n", port->str);
 		return false;
 	}
 	if(tcgetattr(fd, &config) < 0)
 	{
-		fprintf(stderr, "\nERROR: could not read configuration of port %s\n", port.c_str());
+		fprintf(stderr, "\nERROR: could not read configuration of port %s\n", port->str);
 		return false;
 	}
 	//
@@ -408,7 +407,7 @@ bool setup_port(int fd, int baud, int data_bits, int stop_bits, bool parity, boo
 	//
 	if(tcsetattr(fd, TCSAFLUSH, &config) < 0)
 	{
-		fprintf(stderr, "\nERROR: could not set configuration of port %s\n", port.c_str());
+		fprintf(stderr, "\nERROR: could not set configuration of port %s\n", port->str);
 		return false;
 	}
 	return true;
@@ -460,7 +459,7 @@ void* serial_wait(void* serial_ptr)
 		}
 		else
 		{
-			if (!silent) fprintf(stderr, "ERROR: Could not read from port %s\n", port.c_str());
+			if (!silent) fprintf(stderr, "ERROR: Could not read from port %s\n", port->str);
 		}
 
 		// If a message could be decoded, handle it
@@ -513,30 +512,58 @@ void* serial_wait(void* serial_ptr)
 */
 int main(int argc, char* argv[])
 {
+//	GString baud(100);
+//	sprintf(baud.str, "%d", baud);
 
 	// Handling Program options
+		static GOptionEntry entries[] =
+		{
+				{ "sysid", 'a', 0, G_OPTION_ARG_INT, &systemid, "ID of this system", NULL },
+				{ "compid", 'c', 0, G_OPTION_ARG_INT, &serial_compid, "ID of this component", NULL },
+				{ "baud", 'b', 0, G_OPTION_ARG_INT, &baud, "Baud rate (default 115200)", NULL},
+				{ "port", 'p', 0, G_OPTION_ARG_STRING, port, "Serial port", port->str },
+				{ "pc2serial", 'e', 0, G_OPTION_ARG_NONE, &pc2serial, "Send extended information", ((pc2serial) ? "true" : "false") },
+				{ "silent", 's', 0, G_OPTION_ARG_NONE, &silent, "Be silent", NULL },
+				{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
+				{ "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode, changes behaviour", NULL },
+				{ NULL }
+		};
 
-	config::options_description desc("Allowed options");
-	desc.add_options()
-		("help", "produce help message")
-		("sysid,a", config::value<int>(&systemid)->default_value(systemid), "ID of this system, 1-127")
-		("compid,c", config::value<int>(&serial_compid)->default_value(MAV_COMP_ID_IMU), "ID of the component connected to the serial port (if non-zero, messages from this compid wont be forwarded back to the serial port)")
-		("port,p", config::value<string>(&port)->default_value("/dev/ttyUSB0"), "serial port, e.g. /dev/ttyUSB0")
-		("baud,b", config::value<int>(&baud)->default_value(115200), "serial baud rate, e.g. 115200")
-		("silent,s", config::bool_switch(&silent)->default_value(false), "surpress outputs")
-		("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
-		("debug,d", config::bool_switch(&debug)->default_value(false), "Emit debug information")
-		("pc2serial", config::bool_switch(&pc2serial)->default_value(false), "Send more status information from PC over serial (for second XBee mode)")
-		;
-	config::variables_map vm;
-	config::store(config::parse_command_line(argc, argv, desc), vm);
-	config::notify(vm);
+		GError *error = NULL;
+		GOptionContext *context;
 
-	if (vm.count("help"))
-	{
-		std::cout << desc << std::endl;
-		return 1;
-	}
+		context = g_option_context_new ("- translate between LCM broadcast bus and ground control link");
+		g_option_context_add_main_entries (context, entries, NULL);
+		//g_option_context_add_group (context, NULL);
+		if (!g_option_context_parse (context, &argc, &argv, &error))
+		{
+			g_print ("Option parsing failed: %s\n", error->message);
+			exit (1);
+		}
+
+//	// Handling Program options
+//
+//	config::options_description desc("Allowed options");
+//	desc.add_options()
+//		("help", "produce help message")
+//		("sysid,a", config::value<int>(&systemid)->default_value(systemid), "ID of this system, 1-127")
+//		("compid,c", config::value<int>(&serial_compid)->default_value(MAV_COMP_ID_IMU), "ID of the component connected to the serial port (if non-zero, messages from this compid wont be forwarded back to the serial port)")
+//		("port,p", config::value<string>(&port)->default_value("/dev/ttyUSB0"), "serial port, e.g. /dev/ttyUSB0")
+//		("baud,b", config::value<int>(&baud)->default_value(115200), "serial baud rate, e.g. 115200")
+//		("silent,s", config::bool_switch(&silent)->default_value(false), "surpress outputs")
+//		("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
+//		("debug,d", config::bool_switch(&debug)->default_value(false), "Emit debug information")
+//		("pc2serial", config::bool_switch(&pc2serial)->default_value(false), "Send more status information from PC over serial (for second XBee mode)")
+//		;
+//	config::variables_map vm;
+//	config::store(config::parse_command_line(argc, argv, desc), vm);
+//	config::notify(vm);
+//
+//	if (vm.count("help"))
+//	{
+//		std::cout << desc << std::endl;
+//		return 1;
+//	}
 
 	// SETUP SERIAL PORT
 
@@ -544,8 +571,8 @@ int main(int argc, char* argv[])
 
 	// Exit if opening port failed
 	// Open the serial port.
-	if (!silent) printf("Trying to connect to %s.. ", port.c_str());
-	int fd = open_port(port);
+	if (!silent) printf("Trying to connect to %s.. ", port->str);
+	int fd = open_port(port->str);
 	if (fd == -1)
 	{
 		if (!silent) printf("failure, could not open port.\n");
@@ -555,7 +582,7 @@ int main(int argc, char* argv[])
 	{
 		if (!silent) printf("success.\n");
 	}
-	if (!silent) printf("Trying to configure %s.. ", port.c_str());
+	if (!silent) printf("Trying to configure %s.. ", port->str);
 	bool setup = setup_port(fd, baud, 8, 1, false, false);
 	if (!setup)
 	{
@@ -618,7 +645,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		if (!silent) fprintf(stderr, "\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)\n", port.c_str(), baud);
+		if (!silent) fprintf(stderr, "\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)\n", port->str, baud);
 	}
 
 	// FIXME ADD MORE CONNECTION ATTEMPTS
