@@ -343,7 +343,7 @@ int main (int argc, char ** argv)
 	uint8_t customMode;
 	uint8_t systemStatus;
 
-	printf("\nPX SYSTEM CONTROL STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, compid);
+	printf("\nMAVCONN SYSTEM CONTROL STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, compid);
 
 	while (1)
 	{

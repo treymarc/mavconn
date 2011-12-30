@@ -340,7 +340,7 @@ int main(int argc, char* argv[])
 		g_error_free ( err ) ;
 	}
 
-	printf("\nPX MAVLINK BRIDGE UDP STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, componentid);
+	printf("\MAVCONN MAVLINK BRIDGE UDP STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, componentid);
 
 	while (1)
 	{
