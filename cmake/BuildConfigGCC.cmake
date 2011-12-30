@@ -52,8 +52,8 @@ ENDIF()
 SET_COMPILER_FLAGS("$ENV{CXXFLAGS}" CXX CACHE)
 SET_COMPILER_FLAGS("$ENV{CFLAGS}"   C   CACHE)
 
-IF (CMAKE_SYSTEM_PROCESSOR STRNEQUAL "armv7l")
-ELSEIF (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+IF (${CMAKE_SYSTEM_PROCESSOR} STRNEQUAL "armv7l")
+ELSEIF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 # Include supported SSE extensions
 IF(SUPPORTS_SSE41)
   SET(SSE_FLAGS "-msse4.1 -mfpmath=sse")
@@ -86,10 +86,10 @@ ADD_COMPILER_FLAGS("-O2 -g -ggdb          -march=native" RelWithDebInfo CACHE)
 ADD_COMPILER_FLAGS("-Os                   -march=native" MinSizeRel     CACHE)
 ENDIF(APPLE)
 
-IF (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+IF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 # ADD_COMPILER_FLAGS("-mtune=pentium4 -march=pentium4 -ftree-vectorize -msse2 -ffast-math -fexpensive-optimizations -fomit-frame-pointer -funroll-loops" Release CACHE)
   ADD_COMPILER_FLAGS("-fomit-frame-pointer -ftree-vectorize -ftree-vectorizer-verbose=1" Release CACHE)
-ELSEIF (CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l")
+ELSEIF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7l")
   ADD_COMPILER_FLAGS("-mtune=cortex-a9 -march=armv7-a -ftree-vectorize -mfpu=neon -mfloat-abi=softfp -fexpensive-optimizations -fomit-frame-pointer -funroll-loops -ftree-vectorizer-verbose=1 -pthread" Release CACHE)
 ENDIF ()
 
