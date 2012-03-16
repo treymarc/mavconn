@@ -36,15 +36,12 @@ This file is part of the PIXHAWK project
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "dds/Middleware.h"
-#include "dds/interface/graphics/graphics_interface.h"
 #include "dds/interface/image/image_interface.h"
 #include "dds/interface/mavlink/mavlink_interface.h"
 #include "dds/interface/perception/perception_interface.h"
 #include "dds/interface/rgbd_image/rgbd_image_interface.h"
 #include "../interface/shared_mem/PxSHMImageClient.h"
 #include "../interface/shared_mem/PxSHMImageServer.h"
-#include "../lcm/gl_overlay_message_t.h"
-#include "../lcm/obstacle_map_message_t.h"
 #include "PxZip.h"
 
 bool verbose = false;
@@ -56,10 +53,8 @@ std::vector<PxSHMImageServer> imageServerVec;
 std::vector<PxSHMImageServer> rgbdServerVec;
 std::vector<PxSHMImageClient> imageClientVec;
 
-dds_gl_overlay_message_t dds_overlay_msg;
 dds_image_message_t dds_image_msg;
 dds_rgbd_image_message_t dds_rgbd_image_msg;
-dds_obstacle_map_message_t dds_obstacle_map_msg;
 
 void signalHandler(int signal)
 {
@@ -68,26 +63,6 @@ void signalHandler(int signal)
 		fprintf(stderr, "# INFO: Shutting down...\n");
 		quit = true;
 		exit(EXIT_SUCCESS);
-	}
-}
-
-void
-overlayLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-				  const gl_overlay_message_t* msg, void* user)
-{
-	sprintf(dds_overlay_msg.name, "%s", msg->name);
-	dds_overlay_msg.coordinate_frame_type = msg->coordinate_frame_type;
-	dds_overlay_msg.origin_x = msg->origin_x;
-	dds_overlay_msg.origin_y = msg->origin_y;
-	dds_overlay_msg.origin_z = msg->origin_z;
-	dds_overlay_msg.length = msg->length;
-	dds_overlay_msg.data.from_array(reinterpret_cast<DDS_Char*>(msg->data), msg->length);
-
-	px::GLOverlayTopic::instance()->publish(&dds_overlay_msg);
-
-	if (verbose)
-	{
-		fprintf(stderr, "# INFO: Forwarded GL overlay message from LCM to DDS.\n");
 	}
 }
 
@@ -271,30 +246,6 @@ mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 }
 
 void
-obstacleMapLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-					  const obstacle_map_message_t* msg, void* user)
-{
-	dds_obstacle_map_msg.utime = msg->utime;
-	dds_obstacle_map_msg.type = msg->type;
-	dds_obstacle_map_msg.resolution = msg->resolution;
-	dds_obstacle_map_msg.num_rows = msg->num_rows;
-	dds_obstacle_map_msg.num_cols = msg->num_cols;
-	dds_obstacle_map_msg.map_r0 = msg->map_r0;
-	dds_obstacle_map_msg.map_c0 = msg->map_c0;
-	dds_obstacle_map_msg.array_r0 = msg->array_r0;
-	dds_obstacle_map_msg.array_c0 = msg->array_c0;
-	dds_obstacle_map_msg.length = msg->length;
-	dds_obstacle_map_msg.data.from_array(reinterpret_cast<DDS_Char*>(msg->data), msg->length);
-
-	px::ObstacleMapTopic::instance()->publish(&dds_obstacle_map_msg);
-
-	if (verbose)
-	{
-		fprintf(stderr, "# INFO: Forwarded obstacle map message from LCM to DDS.\n");
-	}
-}
-
-void
 rgbdLCMHandler(void)
 {
 	std::vector<PxSHMImageClient> clientVec;
@@ -386,29 +337,6 @@ rgbdLCMHandler(void)
 			}
 		}
 		usleep(1000);
-	}
-}
-
-void
-overlayDDSHandler(void* msg, lcm_t* lcm)
-{
-	dds_gl_overlay_message_t* dds_msg = reinterpret_cast<dds_gl_overlay_message_t*>(msg);
-
-	gl_overlay_message_t lcm_msg;
-
-	sprintf(lcm_msg.name, "%s", dds_msg->name);
-	lcm_msg.coordinate_frame_type = dds_msg->coordinate_frame_type;
-	lcm_msg.origin_x = dds_msg->origin_x;
-	lcm_msg.origin_y = dds_msg->origin_y;
-	lcm_msg.origin_z = dds_msg->origin_z;
-	lcm_msg.length = dds_msg->length;
-	lcm_msg.data = reinterpret_cast<int8_t*>(dds_msg->data.get_contiguous_buffer());
-
-	gl_overlay_message_t_publish(lcm, "GL_OVERLAY", &lcm_msg);
-
-	if (verbose)
-	{
-		fprintf(stderr, "# INFO: Forwarded GL overlay message from DDS to LCM.\n");
 	}
 }
 
@@ -610,33 +538,6 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 	}
 }
 
-void
-obstacleMapDDSHandler(void* msg, lcm_t* lcm)
-{
-	dds_obstacle_map_message_t* dds_msg = reinterpret_cast<dds_obstacle_map_message_t*>(msg);
-
-	obstacle_map_message_t lcm_msg;
-
-	lcm_msg.utime = dds_msg->utime;
-	lcm_msg.type = dds_msg->type;
-	lcm_msg.resolution = dds_msg->resolution;
-	lcm_msg.num_rows = dds_msg->num_rows;
-	lcm_msg.num_cols = dds_msg->num_cols;
-	lcm_msg.map_r0 = dds_msg->map_r0;
-	lcm_msg.map_c0 = dds_msg->map_c0;
-	lcm_msg.array_r0 = dds_msg->array_r0;
-	lcm_msg.array_c0 = dds_msg->array_c0;
-	lcm_msg.length = dds_msg->length;
-	lcm_msg.data = reinterpret_cast<int8_t*>(dds_msg->data.get_contiguous_buffer());
-
-	obstacle_map_message_t_publish(lcm, "OBSTACLE_MAP", &lcm_msg);
-
-	if (verbose)
-	{
-		fprintf(stderr, "# INFO: Forwarded obstacle map message from DDS to LCM.\n");
-	}
-}
-
 int
 main(int argc, char** argv)
 {
@@ -726,10 +627,8 @@ main(int argc, char** argv)
 	px::Middleware mw;
 	mw.init(argc, argv);
 
-	gl_overlay_message_t_subscription_t* overlayLCMSub = 0;
 	mavconn_mavlink_msg_container_t_subscription_t* imageLCMSub = 0;
 	mavconn_mavlink_msg_container_t_subscription_t* mavlinkLCMSub = 0;
-	obstacle_map_message_t_subscription_t* obstacleMapLCMSub = 0;
 
 	mavlinkLCMSub = mavconn_mavlink_msg_container_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
 	px::MavlinkTopic::instance()->advertise();
@@ -752,21 +651,15 @@ main(int argc, char** argv)
 			lastImageTimestamp[i] = 0.0;
 		}
 
-		dds_gl_overlay_message_t_initialize(&dds_overlay_msg);
 		dds_image_message_t_initialize(&dds_image_msg);
 		dds_rgbd_image_message_t_initialize(&dds_rgbd_image_msg);
-		dds_obstacle_map_message_t_initialize(&dds_obstacle_map_msg);
 
 		// subscribe to LCM messages
-		overlayLCMSub = gl_overlay_message_t_subscribe(lcm, "GL_OVERLAY", &overlayLCMHandler, 0);
 		imageLCMSub = mavconn_mavlink_msg_container_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
-		obstacleMapLCMSub = obstacle_map_message_t_subscribe(lcm, "OBSTACLE_MAP", &obstacleMapLCMHandler, 0);
 
 		// advertise DDS topics
-		px::GLOverlayTopic::instance()->advertise();
 		px::ImageTopic::instance()->advertise();
 		px::RGBDImageTopic::instance()->advertise();
-		px::ObstacleMapTopic::instance()->advertise();
 
 		// set up thread to check for incoming RGBD data from shared memory
 		if (!Glib::thread_supported())
@@ -796,17 +689,12 @@ main(int argc, char** argv)
 
 		// subscribe to DDS messages
 		px::Handler handler;
-		handler = px::Handler(sigc::bind(sigc::ptr_fun(overlayDDSHandler), lcm));
-		px::GLOverlayTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
 
 		handler = px::Handler(sigc::ptr_fun(imageDDSHandler));
 		px::ImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
 		
 		handler = px::Handler(sigc::ptr_fun(rgbdDDSHandler));
 		px::RGBDImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
-
-		handler = px::Handler(sigc::bind(sigc::ptr_fun(obstacleMapDDSHandler), lcm));
-		px::ObstacleMapTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
 	}
 
 	while (!quit)
@@ -820,10 +708,8 @@ main(int argc, char** argv)
 	{
 		mavconn_mavlink_msg_container_t_unsubscribe(lcm, mavlinkLCMSub);
 
-		dds_gl_overlay_message_t_finalize(&dds_overlay_msg);
 		dds_image_message_t_finalize(&dds_image_msg);
 		dds_rgbd_image_message_t_finalize(&dds_rgbd_image_msg);
-		dds_obstacle_map_message_t_finalize(&dds_obstacle_map_msg);
 	}
 	lcm_destroy(lcm);
 

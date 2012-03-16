@@ -66,8 +66,8 @@ mavlink_optical_flow_t last_known_optical_flow;
 const int MAGIC_MAX_BUFFER_AND_RETRY = 100;		// Size of the message buffer for LCM messages and maximum number of skipped/dropped frames before stopping when a mismatch happens
 const int MAGIC_MIN_SEQUENCE_DIFF = 150;		// *has to be > than MAGIC_MAX_BUFFER_AND_RETRY!* Minimum difference between two consecutively processed images to assume a sequence mismatch
 												// In other words: the maximum number of skippable frames
-const int MAGIC_MESSAGE_TIMEOUT_US = 5000000;	// Time the process waits for messages if the buffer is empty
-const int MAGIC_IMAGE_TIMEOUT_US = 5000000;		// Time the process waits for images
+const int MAGIC_MESSAGE_TIMEOUT_US = 3000000;	// Time the process waits for messages if the buffer is empty
+const int MAGIC_IMAGE_TIMEOUT_US = 3000000;		// Time the process waits for images
 const int MAGIC_MAX_IMAGE_DELAY_US = 5000000;	// Maximum delay allowed between shutter time and start of image processing
 const int MAGIC_HARD_RETRY_MUTEX = 2;			// Maximum number of times a mutex is tried to timed lock
 
@@ -243,6 +243,7 @@ int main(int argc, char* argv[])
 	uint32_t gamma;		///< Camera gamma
 	bool automode;		///< Use auto brightness/gain/exposure/gamma
 	float frameRate;	///< Frame rate in Hz
+	uint32_t pixelClockKHz; ///< Pixel clock in KHz
 
 	bool triggerslave = false;
 
@@ -260,6 +261,7 @@ int main(int argc, char* argv[])
 									("gain,g", config::value<uint32_t>(&gain)->default_value(0), "Gain in FIXME")
 									("gamma", config::value<uint32_t>(&gamma)->default_value(0), "Gamma in FIXME")
 									("fps", config::value<float>(&frameRate)->default_value(60.0f), "Camera fps")
+									("pixelclock", config::value<uint32_t>(&pixelClockKHz)->default_value(12500), "Pixel clock in KHz")
 									("trigger,t", config::bool_switch(&trigger)->default_value(false), "Enable hardware trigger (Firefly MV: INPUT: GPIO0, OUTPUT: GPIO2)")
 									("triggerslave", config::bool_switch(&triggerslave)->default_value(false), "Enable if another px_camera process is already controlling the imu trigger settings")
 									("automode,a", config::bool_switch(&automode)->default_value(false), "Enable auto brightness/gain/exposure/gamma")
@@ -349,6 +351,7 @@ int main(int argc, char* argv[])
     paramClient->setParamValue("MINIMGINTERVAL", 0);
     paramClient->setParamValue("EXPOSURE", exposure);
     paramClient->setParamValue("GAIN", gain);
+    paramClient->setParamValue("PIXELCLOCKKHZ", pixelClockKHz);
     paramClient->readParamsFromFile(configFile);
 
 	//========= Initialize capture devices =========
@@ -455,16 +458,18 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	usleep(500000);
+
 	PxCameraConfig::Mode mode = PxCameraConfig::MANUAL_MODE;
 	if (automode)
 	{
 		mode = PxCameraConfig::AUTO_MODE;
 	}
-	PxCameraConfig config(mode, frameRate, trigger, exposure, gain, gamma);
+	PxCameraConfig config(mode, frameRate, trigger, exposure, gain, gamma, pixelClockKHz);
 
 	if (useStereo)
 	{
-		fprintf(stderr, "# INFO: Opening stereo with serial #%llu and #%llu, trigger is: enabled\n", (long long unsigned) camSerial, (long long unsigned) camSerialRight);
+		fprintf(stderr, "# INFO: Opening stereo with serial #%llu and #%llu, trigger is: %s\n", (long long unsigned) camSerial, (long long unsigned) camSerialRight, (trigger) ? "enabled" : "disabled");
 		if (!pxStereoCam->init())
 		{
 			fprintf(stderr, "# ERROR: Cannot initialize stereo setup.\n");
@@ -508,6 +513,10 @@ int main(int argc, char* argv[])
 		}
 		messageMutex.unlock();
 	}
+
+	memset(&last_known_attitude, 0, sizeof(mavlink_attitude_t));
+	memset(&last_known_control_position, 0, sizeof(mavlink_local_position_ned_t));
+	memset(&last_known_optical_flow, 0, sizeof(mavlink_optical_flow_t));
 
 	uint64_t lastShutter = 0;
 //	uint64_t lastMessageDelay = 0;
@@ -737,6 +746,7 @@ int main(int argc, char* argv[])
 		bool changed = false;
 		uint32_t newExposureTime = (uint32_t)paramClient->getParamValue("EXPOSURE");
 		uint32_t newGain = (uint32_t)paramClient->getParamValue("GAIN");
+		uint32_t newPixelClockKHz = (uint32_t)paramClient->getParamValue("PIXELCLOCKKHZ");
 		if (newExposureTime != config.getExposureTime())
 		{
 			config.setExposureTime(newExposureTime);
@@ -745,6 +755,11 @@ int main(int argc, char* argv[])
 		if (newGain != config.getGain())
 		{
 			config.setGain(newGain);
+			changed = true;
+		}
+		if (newPixelClockKHz != config.getPixelClockKHz())
+		{
+			config.setPixelClockKHz(newPixelClockKHz);
 			changed = true;
 		}
 		if (changed)
@@ -799,7 +814,11 @@ int main(int argc, char* argv[])
 			image_data.lon = last_known_control_position.x;
 			image_data.lat = last_known_control_position.y;
 			image_data.alt = last_known_control_position.z;
-			image_data.ground_z = last_known_optical_flow.ground_distance;
+			image_data.local_z = last_known_optical_flow.ground_distance;
+			image_data.ground_x = 0.f;
+			image_data.ground_y = 0.f;
+			image_data.ground_z = 0.f;
+			image_data.seq = 0;
 			metaDataMutex.unlock();
 
 			if (useStereo)
@@ -981,8 +1000,9 @@ int main(int argc, char* argv[])
 					// the message has the right sequence number, read the data do stuff and so on
 					else if (messageSequence == neededMessageSequence)
 					{
+					    bufferIMU_t dibIMU = (bufferIMU_t)(*dataIterator);
 						lastShutter = ((bufferIMU_t)(*dataIterator)).msg.timestamp;
-						memcpy(&image_data, &((bufferIMU_t)(*dataIterator)).msg, sizeof(mavlink_image_triggered_t));
+						memcpy(&image_data, &(dibIMU.msg), sizeof(mavlink_image_triggered_t));
 						if (timestamp > lastShutter)
 						{
 							if (verbose)

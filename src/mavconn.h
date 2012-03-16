@@ -165,7 +165,7 @@ sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE 
 	container.link_network_source = link_type;
 	container.extended_payload_len = 0;
 	container.extended_payload = 0;
-	memcpy(&(container.msg), msg, MAVLINK_MAX_PACKET_LEN);
+	memcpy(&(container.msg), msg, sizeof(container.msg));
 
 	// Publish the message on the LCM bus
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);

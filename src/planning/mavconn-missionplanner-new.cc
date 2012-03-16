@@ -1504,7 +1504,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    case MAVLINK_MSG_ID_ATTITUDE:
 	        {
-	            if(msg->sysid == systemid)
+	            if(msg->sysid == systemid && msg->compid == paramClient->getParamValue("IMUID"))
 	            {
 	                if(cur_dest.frame == 1)
 	                {
@@ -1523,7 +1523,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 	        {
-	            if(msg->sysid == systemid)
+	            if(msg->sysid == systemid && msg->compid == paramClient->getParamValue("IMUID"))
 	            {
 	                if(cur_dest.frame == 1)
 	                {
@@ -1737,6 +1737,7 @@ int main(int argc, char* argv[])
 *  The function parses for program options, sets up some example waypoints and connects to IPC
 */
 {
+	int imuid = 200;
 	std::string waypointfile;
     config::options_description desc("Allowed options");
     desc.add_options()
@@ -1745,6 +1746,7 @@ int main(int argc, char* argv[])
             ("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
             ("config", config::value<std::string>(&configFile)->default_value("config/parameters_missionplanner.cfg"), "Config file for system parameters")
             ("waypointfile", config::value<std::string>(&waypointfile)->default_value(""), "Config file for waypoint")
+            ("imuid", config::value<int>(&imuid)->default_value(200), "IMU Comp ID that will be the source for local_position_ned and attitude")
             ;
     config::variables_map vm;
     config::store(config::parse_command_line(argc, argv, desc), vm);
@@ -1788,6 +1790,7 @@ int main(int argc, char* argv[])
     paramClient->setParamValue("PROTDELAY",40);	 //Attention: microseconds!!
     paramClient->setParamValue("PROTTIMEOUT", 2.0);
     paramClient->setParamValue("YAWTOLERANCE", 0.1745f);
+    paramClient->setParamValue("IMUID", imuid);
     paramClient->readParamsFromFile(configFile);
 
 

@@ -1,0 +1,16 @@
+/home/pixhawk/pixhawk/mavconn/light-release/src/calibration/CMakeFiles/cameracalibration.dir
+/home/pixhawk/pixhawk/mavconn/light-release/cmake/doc/api/CMakeFiles/doc.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/comm/CMakeFiles/mavconn-bridge-serial.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/comm/CMakeFiles/mavconn-bridge-udp.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/camera/CMakeFiles/mavconn-camera.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/camera/CMakeFiles/mavconn-camera-opencv.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/calibration/CMakeFiles/mavconn-cameracalibration-auto.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/comm/messenger/CMakeFiles/mavconn-messenger.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/planning/CMakeFiles/mavconn-missionplanner-new.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/comm/CMakeFiles/mavconn-ping.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/core/CMakeFiles/mavconn-sysctrl.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/camera/CMakeFiles/mavconn-view.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/camera/CMakeFiles/mavconn_cam.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/camera/CMakeFiles/mavconn_cam_opencv.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/comm/lcm/CMakeFiles/mavconn_lcm.dir
+/home/pixhawk/pixhawk/mavconn/light-release/src/interface/shared_mem/CMakeFiles/mavconn_shm.dir

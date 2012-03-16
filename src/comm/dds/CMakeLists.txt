@@ -31,10 +31,6 @@ SET_SOURCE_FILES(DDS_CORE_SRC_FILES
 )
 
 SET_SOURCE_FILES(DDS_INTERFACE_SRC_FILES
-  interface/graphics/dds_gl_overlay_message_t.cxx
-  interface/graphics/dds_gl_overlay_message_tPlugin.cxx
-  interface/graphics/dds_gl_overlay_message_tSupport.cxx
-  interface/graphics/graphics_interface.cc
   interface/image/dds_image_message_t.cxx
   interface/image/dds_image_message_tPlugin.cxx
   interface/image/dds_image_message_tSupport.cxx
@@ -57,9 +53,12 @@ PIXHAWK_LIBRARY(mavconn_dds SHARED ${DDS_CORE_SRC_FILES} ${DDS_INTERFACE_SRC_FIL
 PIXHAWK_LINK_LIBRARIES(mavconn_dds
   dl
   nsl
+  pthread
   rt
-  ${RTI_LIBRARIES}
+  ${GLIB2_LIBRARY}
   ${GLIBMM2_LIBRARY}
+  ${GTHREAD2_LIBRARY}
+  ${RTI_LIBRARIES}
   ${SIGC++_LIBRARY}
   ${ZLIB_LIBRARIES}
 )

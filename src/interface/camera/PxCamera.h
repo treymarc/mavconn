@@ -21,7 +21,8 @@ public:
 				   uint32_t _exposureTime = 2000,
 				   uint32_t _gain = 120,
 				   uint32_t _gamma = 0,
-				   uint32_t _brightness = 2047)
+				   uint32_t _brightness = 2047,
+				   uint32_t _pixelClockKHz = 12500)
 	 : mode(_mode)
 	 , frameRate(_frameRate)
 	 , externalTrigger(_externalTrigger)
@@ -29,6 +30,7 @@ public:
 	 , gain(_gain)
 	 , gamma(_gamma)
 	 , brightness(_brightness)
+	 , pixelClockKHz(_pixelClockKHz)
 	{
 
 	}
@@ -40,14 +42,16 @@ public:
 	uint32_t getGain(void) const { return gain; }
 	uint32_t getGamma(void) const { return gamma; }
 	uint32_t getBrightness(void) const { return brightness; }
+	uint32_t getPixelClockKHz(void) const { return pixelClockKHz; }
 
 	void setMode(Mode _mode) { mode = _mode; }
 	void setFrameRate(float fps) { frameRate = fps; }
+	void setExternalTrigger(bool trigger) { externalTrigger = trigger; }
 	void setExposureTime(uint32_t exposure) { exposureTime = exposure; }
 	void setGain(uint32_t _gain) { gain = _gain; }
 	void setGamma(uint32_t _gamma) { gamma = _gamma; }
 	void setBrightness(uint32_t _brightness) { brightness = _brightness; }
-
+	void setPixelClockKHz(uint32_t _pixelClockKHz) { pixelClockKHz = _pixelClockKHz; }
 
 private:
 	Mode mode;
@@ -57,6 +61,7 @@ private:
 	uint32_t gain;
 	uint32_t gamma;
 	uint32_t brightness;
+	uint32_t pixelClockKHz;
 };
 
 class PxCamera

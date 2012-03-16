@@ -964,8 +964,9 @@ int main(int argc, char* argv[])
 					// the message has the right sequence number, read the data do stuff and so on
 					else if (messageSequence == neededMessageSequence)
 					{
+					    bufferIMU_t dibIMU = (bufferIMU_t)(*dataIterator);
 						lastShutter = ((bufferIMU_t)(*dataIterator)).msg.timestamp;
-						memcpy(&image_data, &((bufferIMU_t)(*dataIterator)).msg, sizeof(mavlink_image_triggered_t));
+						memcpy(&image_data, &(dibIMU.msg), sizeof(mavlink_image_triggered_t));
 						if (timestamp > lastShutter)
 						{
 							if (verbose)

@@ -35,23 +35,23 @@ PIXHAWK_LINK_LIBRARIES(mavconn-bridge-udp
   ${GTHREAD2_LIBRARY}
 )
 
-PIXHAWK_EXECUTABLE_CONDITIONAL(mavconn-gpsd CONDITION GPS_FOUND FILES mavconn-gpsd.cc)
-PIXHAWK_LINK_LIBRARIES(mavconn-gpsd
-  mavconn_lcm
-  ${GPS_LIBRARY}
-  ${GPS_LIBRARY_OPTIMIZED}
-  #${Boost_PROGRAM_OPTIONS_LIBRARY}
-)
+#PIXHAWK_EXECUTABLE_CONDITIONAL(mavconn-gpsd CONDITION GPS_FOUND FILES mavconn-gpsd.cc)
+#PIXHAWK_LINK_LIBRARIES(mavconn-gpsd
+#  mavconn_lcm
+#  ${GPS_LIBRARY}
+#  ${GPS_LIBRARY_OPTIMIZED}
+#  #${Boost_PROGRAM_OPTIONS_LIBRARY}
+#)
 
-PIXHAWK_EXECUTABLE(mavconn-imagestreamer mavconn-imagestreamer.cc)
-PIXHAWK_LINK_LIBRARIES(mavconn-imagestreamer
-  mavconn_lcm
-  #${Boost_PROGRAM_OPTIONS_LIBRARY}
-  ${OPENCV_CORE_LIBRARY}
-  ${OPENCV_IMGPROC_LIBRARY}
-  ${OPENCV_HIGHGUI_LIBRARY}
-  #${Boost_FILESYSTEM_LIBRARY}
-  #${Boost_SYSTEM_LIBRARY}
-  ${GLIB2_LIBRARY}
-  ${GTHREAD2_LIBRARY}
-)
+#PIXHAWK_EXECUTABLE(mavconn-imagestreamer mavconn-imagestreamer.cc)
+#PIXHAWK_LINK_LIBRARIES(mavconn-imagestreamer
+#  mavconn_lcm
+#  #${Boost_PROGRAM_OPTIONS_LIBRARY}
+#  ${OPENCV_CORE_LIBRARY}
+#  ${OPENCV_IMGPROC_LIBRARY}
+#  ${OPENCV_HIGHGUI_LIBRARY}
+#  #${Boost_FILESYSTEM_LIBRARY}
+#  #${Boost_SYSTEM_LIBRARY}
+#  ${GLIB2_LIBRARY}
+#  ${GTHREAD2_LIBRARY}
+#)

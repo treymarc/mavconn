@@ -39,23 +39,19 @@ FUNCTION(PIXHAWK_INSTALL)
   )
   SET(MAVCONN_HEADERS
 	${CMAKE_SOURCE_DIR}/src/mavconn.h
+	${CMAKE_SOURCE_DIR}/src/mavconn.hpp
 	${CMAKE_BINARY_DIR}/src/MAVCONNConfig.h
   )
   INSTALL(FILES ${MAVCONN_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH})
-
-  SET(MAVCONNNMEA_HEADERS
-        ${CMAKE_SOURCE_DIR}/src/external/nmea/include/nmea/nmea.h
-  )
-  INSTALL(FILES ${MAVCONNNMEA_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/external/nmea/)
 
   SET(MAVCONNLCM_HEADERS
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_msg_container_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/camera_image_message_t.h
-	${CMAKE_SOURCE_DIR}/src/comm/lcm/gl_overlay_message_t.h
-	${CMAKE_SOURCE_DIR}/src/comm/lcm/obstacle_map_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/rgbd_camera_image_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/virtual_scan_message_t.h
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavlink_message_t.hpp
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavlink_msg_container_t.hpp
   )
   INSTALL(FILES ${MAVCONNLCM_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/comm/lcm/)
 

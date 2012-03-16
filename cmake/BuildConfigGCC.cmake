@@ -78,12 +78,16 @@ SET_COMPILER_FLAGS("             -DNDEBUG -march=core2" ReleaseAll     CACHE)
 ADD_COMPILER_FLAGS("-O2                   -march=core2" Release        CACHE)
 ADD_COMPILER_FLAGS("-O2 -g -ggdb          -march=core2" RelWithDebInfo CACHE)
 ADD_COMPILER_FLAGS("-Os                   -march=core2" MinSizeRel     CACHE)
+# General linker flags
+SET_LINKER_FLAGS("--no-undefined" CACHE)
 ELSE(APPLE)
 SET_COMPILER_FLAGS("    -g -ggdb -D_DEBUG" Debug          CACHE)
 SET_COMPILER_FLAGS("             -DNDEBUG -march=native" ReleaseAll     CACHE)
 ADD_COMPILER_FLAGS("-O2                   -march=native" Release        CACHE)
 ADD_COMPILER_FLAGS("-O2 -g -ggdb          -march=native" RelWithDebInfo CACHE)
 ADD_COMPILER_FLAGS("-Os                   -march=native" MinSizeRel     CACHE)
+# General linker flags
+SET_LINKER_FLAGS("-Wl,--no-undefined -lm" CACHE)
 ENDIF(APPLE)
 
 IF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -126,6 +130,3 @@ ELSE()
   REMOVE_COMPILER_FLAGS("-Wextra -Wno-unused-parameter" CACHE)
   ADD_COMPILER_FLAGS("-Wall" CACHE)
 ENDIF()
-
-# General linker flags
-SET_LINKER_FLAGS("--no-undefined" CACHE)

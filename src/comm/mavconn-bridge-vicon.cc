@@ -43,7 +43,7 @@ char rotor(void)
 	return displayChar[count];
 }
 
-void infoThread(void* clientData)
+void* infoThread(void* clientData)
 		{
 	double lastTime = PxVicon::getTime();
 
@@ -70,13 +70,20 @@ int main(int argc, char** argv)
 {
 	config::options_description desc("Allowed options");
 	desc.add_options()
-		("hostname,h", config::value<std::string>(&viconAddress)->default_value("vispc43.inf.ethz.ch"), "Host name of Vicon server")
+		("help", "Produce help message")
+		("hostname,h", config::value<std::string>(&viconAddress)->default_value("129.132.85.192"), "Host name of Vicon server")
 		("frequency,f", config::value<double>(&frequency)->default_value(100.0), "Data frequency of pose updates")
 		;
 
 	config::variables_map vm;
 	config::store(config::parse_command_line(argc, argv, desc), vm);
 	config::notify(vm);
+
+	if (vm.count("help"))
+	{
+		std::cout << desc << std::endl;
+		return 1;
+	}
 
 	lcm_t* lcm = lcm_create("udpm://");
 

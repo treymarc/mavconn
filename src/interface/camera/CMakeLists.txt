@@ -38,6 +38,20 @@ LINK_DIRECTORIES(
 #  ${Boost_SYSTEM_LIBRARY}
 #)
 
+#PIXHAWK_EXECUTABLE(mavconn-imagecapture-new mavconn-imagecapture-new.cc)
+#PIXHAWK_LINK_LIBRARIES(mavconn-imagecapture-new
+#  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+#  ${OPENCV_CORE_LIBRARY}
+#  ${OPENCV_HIGHGUI_LIBRARY}
+#  ${GLIB2_LIBRARY}
+#  ${GTHREAD2_LIBRARY}
+#  mavconn_lcm
+#  mavconn_shm
+#  lcm
+#  ${Boost_FILESYSTEM_LIBRARY}
+#  ${Boost_SYSTEM_LIBRARY}
+#)
+
 #PIXHAWK_EXECUTABLE(mavconn-replay mavconn-replay.cc)
 #PIXHAWK_LINK_LIBRARIES(mavconn-replay
 #  ${OPENCV_CORE_LIBRARY}
@@ -50,6 +64,7 @@ LINK_DIRECTORIES(
 #  ${Boost_FILESYSTEM_LIBRARY}
 #  ${Boost_SYSTEM_LIBRARY}
 #)
+
 
 SET_SOURCE_FILES(CAMERA_OPENCV_SRC_FILES
   PxCamera.cc
@@ -109,8 +124,8 @@ PIXHAWK_EXECUTABLE(mavconn-camera
   mavconn-camera.cc
 )
 PIXHAWK_LINK_LIBRARIES(mavconn-camera
-#  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-#  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY}
     ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
@@ -134,8 +149,8 @@ PIXHAWK_EXECUTABLE(mavconn-camera-opencv
   mavconn-camera-opencv.cc
 )
 PIXHAWK_LINK_LIBRARIES(mavconn-camera-opencv
-#  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-#  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY}
   ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
@@ -144,7 +159,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn-camera-opencv
 
 PIXHAWK_EXECUTABLE(mavconn-view mavconn-view.cc)
 PIXHAWK_LINK_LIBRARIES(mavconn-view
-#  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OPENCV_CORE_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY}
   ${OPENCV_HIGHGUI_LIBRARY}

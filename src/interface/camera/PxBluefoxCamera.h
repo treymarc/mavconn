@@ -28,6 +28,7 @@ private:
 	bool setExposureTime(uint32_t exposureTime);
 	bool setGain(uint32_t gain);
 	bool setGainDB(float gain_dB);
+	bool setPixelClock(uint32_t pixelClockKHz);
 
 	float getFramesPerSecond(void);
 

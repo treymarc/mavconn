@@ -11,5 +11,5 @@ PIXHAWK_LINK_LIBRARIES(mavconn-missionplanner-new
   ${GTHREAD2_LIBRARY}
   mavconn_lcm
   lcm
-  #${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )

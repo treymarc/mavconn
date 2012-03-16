@@ -1,0 +1,4 @@
+#!/bin/sh
+# convenience script for starting pixhawk on Linux
+
+exec /home/pixhawk/pixhawk/mavconn/light-release/bin/ferns $@

@@ -103,7 +103,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 	uint32_t messageLength = mavlink_msg_to_send_buffer(buf, msg);
-
+	
 	if (msg->msgid != MAVLINK_MSG_ID_EXTENDED_MESSAGE)
 	{
 		if (verbose)

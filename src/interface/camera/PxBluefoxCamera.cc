@@ -32,44 +32,6 @@ PxBluefoxCamera::init(void)
 	io.reset(new mvIMPACT::acquire::IOSubSystemBlueFOX(dev));
 	stats.reset(new mvIMPACT::acquire::Statistics(dev));
 
-	try
-	{
-		typedef std::vector<std::pair<std::string, mvIMPACT::acquire::TCameraPixelClock> > dict_type;
-		dict_type dict;
-
-		cameraSettings->pixelClock_KHz.getTranslationDict(dict);
-
-		int pixelclock = 0; // in KHz
-		for (dict_type::const_iterator i = dict.begin(); i != dict.end(); ++i)
-		{
-			if (i->second > pixelclock)
-			{
-				pixelclock = i->second;
-			}
-		}
-
-		int difference = std::numeric_limits<int>::max();
-
-		dict_type::const_iterator it;
-		for (dict_type::const_iterator i = dict.begin(); i != dict.end(); ++i)
-		{
-			if (std::abs(i->second - pixelclock) < difference)
-			{
-				difference = std::abs(i->second - pixelclock);
-				it = i;
-			}
-		}
-		cameraSettings->pixelClock_KHz.writeS(it->first);
-	}
-	catch (const mvIMPACT::acquire::ImpactAcquireException& e)
-	{
-		fprintf(stderr, "# ERROR: Cannot set camera pixel clock. "
-						"Error code: %d (%s)\n",
-						e.getErrorCode(),
-						e.getErrorCodeAsString().c_str());
-		return false;
-	}
-
 	imageAvailable = false;
 
 	return true;
@@ -121,6 +83,11 @@ PxBluefoxCamera::setConfig(const PxCameraConfig& config)
 		}
 	}
 
+	if (!setPixelClock(config.getPixelClockKHz()))
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -148,6 +115,7 @@ PxBluefoxCamera::start(void)
 
 	while (!imageAvailable && currentTime - startTime < timeout)
 	{
+		usleep(500);
 		gettimeofday(&tv, NULL);
 		currentTime = tv.tv_sec + static_cast<double>(tv.tv_usec) / 1000000.0;
 	}
@@ -406,6 +374,44 @@ PxBluefoxCamera::setGainDB(float gain_dB)
 	}
 
 	cameraSettings->gain_dB.write(gain_dB);
+
+	return true;
+}
+
+bool
+PxBluefoxCamera::setPixelClock(uint32_t pixelClockKHz)
+{
+	int pixelClock = pixelClockKHz;
+
+        try
+        {
+                typedef std::vector<std::pair<std::string, mvIMPACT::acquire::TCameraPixelClock> > dict_type;
+                dict_type dict;
+
+                cameraSettings->pixelClock_KHz.getTranslationDict(dict);
+
+                int difference = std::numeric_limits<int>::max();
+
+                dict_type::const_iterator it;
+                for (dict_type::const_iterator i = dict.begin(); i != dict.end(); ++i)
+                {
+                        if (std::abs(i->second - pixelClock) < difference)
+                        {
+                                difference = std::abs(i->second - pixelClock);
+                                it = i;
+                        }
+                }
+                cameraSettings->pixelClock_KHz.writeS(it->first);
+		fprintf(stderr, "# INFO: Setting pixel clock to %d KHz.\n", it->second);
+        }
+        catch (const mvIMPACT::acquire::ImpactAcquireException& e)
+        {
+                fprintf(stderr, "# ERROR: Cannot set camera pixel clock. "
+                                                "Error code: %d (%s)\n",
+                                                e.getErrorCode(),
+                                                e.getErrorCodeAsString().c_str());
+                return false;
+        }
 
 	return true;
 }

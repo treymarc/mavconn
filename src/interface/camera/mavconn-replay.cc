@@ -8,8 +8,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 // OpenCV includes
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <interface/shared_mem/PxSHMImageServer.h>
 #include "mavconn.h"
@@ -198,8 +197,6 @@ int main(int argc, char* argv[])
 		{
 			printf("mavconn-replay: Found right camera image stream, loading image list...\n");
 
-			do_stereo = true;
-
 			if (imagepath_right.size() > 0 && imagepath_right[imagepath_right.size() - 1] != '/')
 				imagepath_right += '/';
 
@@ -226,6 +223,18 @@ int main(int argc, char* argv[])
 				}
 			}
 			catch (...) {}
+		}
+
+		//if we found any right camera images activate stereo mode
+		if (!images_right.empty())
+		{
+			printf("Outputting stereo stream\n");
+			do_stereo = true;
+		}
+		else
+		{
+			printf("Outputting mono stream\n");
+			do_stereo = false;
 		}
 
 	}
@@ -301,6 +310,8 @@ int main(int argc, char* argv[])
 		//msg.ck_a = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 1);
 		//msg.ck_b = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 2);
 
+		//printf("%llu\n", time);
+
 		//check for image triggered message, load the image and put it to the shared memory
 		if (do_images && msg.msgid == MAVLINK_MSG_ID_IMAGE_TRIGGERED)
 		{
@@ -327,7 +338,7 @@ int main(int argc, char* argv[])
 				{
 					// Image found
 					if (verbose) printf("[%llu] loading left image %s\n", (long long unsigned) camid_left, it->second.c_str());
-					image_left = cvLoadImage(it->second.c_str(), false);
+					image_left = cv::imread(it->second.c_str(), -1);
 					il = true;
 				}
 
@@ -343,7 +354,7 @@ int main(int argc, char* argv[])
 					{
 						// Image found
 						if (verbose) printf("[%llu] loading right image %s\n", (long long unsigned) camid_right, it->second.c_str());
-						image_right = cvLoadImage(it->second.c_str(), false);
+						image_right = cv::imread(it->second.c_str(), -1);
 						ir = true;
 					}
 				}
@@ -379,6 +390,7 @@ int main(int argc, char* argv[])
 			sendMAVLinkMessage(lcmMavlink, &msg);
 			last_time = time;
 			last_current_time = current_time;
+			usleep(3000);
 		}
 	}
 

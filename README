@@ -12,10 +12,13 @@ the QGroundControl Operator Control Unit.
 Building MAVConn is quick and easy, only very few external libraries are needed.
 
 Installation Instructions:
-http://pixhawk.ethz.ch/wiki/software/mavconn/
+http://pixhawk.ethz.ch/software/mavconn/
 
 Detailed Architecture / System Information:
-http://pixhawk.ethz.ch/wiki/software/middleware/
+http://pixhawk.ethz.ch/software/middleware/
+
+Communication Protocol:
+http://www.qgroundcontrol.org/mavlink/
 
 Operator Control Unit:
 http://www.qgroundcontrol.org
