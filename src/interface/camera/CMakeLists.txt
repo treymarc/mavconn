@@ -88,18 +88,22 @@ SET_SOURCE_FILES(CAMERA_SRC_FILES
   PxStereoCamera.cc
 )
 
-IF(LINUX_SYSTEM_FOUND)
+# WARNING: Do not link mvDeviceManager and OPENCV_HIGHGUI_LIBRARY
+# to the same executable/library as there is some unknown cross-interaction
+# between these 2 libraries which causes the camera API to work incorrectly.
+
+
+IF(LINUX_SYSTEM_FOUND AND BLUEFOX_FOUND)
 SET_SOURCE_FILES(CAMERA_SRC_FILES
   ${CAMERA_SRC_FILES}
   PxBluefoxCamera.cc
   PxBluefoxCameraManager.cc
   PxBluefoxStereoCamera.cc
 )
-ENDIF(LINUX_SYSTEM_FOUND)
-
-# WARNING: Do not link mvDeviceManager and OPENCV_HIGHGUI_LIBRARY
-# to the same executable/library as there is some unknown cross-interaction
-# between these 2 libraries which causes the camera API to work incorrectly.
+PIXHAWK_LINK_LIBRARIES(mavconn_cam
+  mvDeviceManager
+)
+ELSE()
 PIXHAWK_LIBRARY(mavconn_cam SHARED ${CAMERA_SRC_FILES})
 PIXHAWK_LINK_LIBRARIES(mavconn_cam
   ${DC_LIBRARY_OPTIMIZED}
@@ -111,12 +115,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn_cam
   mavconn_lcm
   mavconn_shm
 )
-
-IF(LINUX_SYSTEM_FOUND)
-PIXHAWK_LINK_LIBRARIES(mavconn_cam
-  mvDeviceManager
-)
-ENDIF(LINUX_SYSTEM_FOUND)
+ENDIF(LINUX_SYSTEM_FOUND AND BLUEFOX_FOUND)
 
 SET_TARGET_PROPERTIES(mavconn_cam PROPERTIES COMPILE_FLAGS "-D_REENTRANT")
 
@@ -127,7 +126,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn-camera
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY}
-    ${GLIB2_LIBRARY}
+  ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
   mavconn_cam
 )

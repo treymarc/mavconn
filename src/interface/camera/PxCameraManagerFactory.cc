@@ -1,12 +1,16 @@
 #include "PxCameraManagerFactory.h"
 
+#undef __linux
+
 #ifdef __linux
 #include "PxBluefoxCameraManager.h"
 #endif
 #include "PxFireflyCameraManager.h"
 //#include "PxOpenCVCameraManager.h"
 
+#ifdef __linux
 PxCameraManagerPtr PxCameraManagerFactory::bluefoxCameraManager;
+#endif
 PxCameraManagerPtr PxCameraManagerFactory::fireflyCameraManager;
 //PxCameraManagerPtr PxCameraManagerFactory::opencvCameraManager;
 
@@ -19,25 +23,25 @@ PxCameraManagerFactory::generate(const std::string& type)
 #endif
 
 	// return singleton instance of device-specific camera manager
-	if (type.compare("bluefox") == 0 && blueFoxSupported)
-	{
-		if (bluefoxCameraManager.get() == 0)
-		{
+        if (type.compare("firefly") == 0)
+        {
+                if (fireflyCameraManager.get() == 0)
+                {
+                        fireflyCameraManager = PxCameraManagerPtr(new PxFireflyCameraManager);
+                }
+                return fireflyCameraManager;
+        }
 #ifdef __linux
-			bluefoxCameraManager = PxCameraManagerPtr(new PxBluefoxCameraManager);
+        else if (type.compare("bluefox") == 0 && blueFoxSupported)
+        {
+                if (bluefoxCameraManager.get() == 0)
+                {
+                        bluefoxCameraManager = PxCameraManagerPtr(new PxBluefoxCameraManager);
+                }
+                return bluefoxCameraManager;
+        }
 #endif
-		}
-		return bluefoxCameraManager;
-	}
-	else if (type.compare("firefly") == 0)
-	{
-		if (fireflyCameraManager.get() == 0)
-		{
-			fireflyCameraManager = PxCameraManagerPtr(new PxFireflyCameraManager);
-		}
-		return fireflyCameraManager;
-	}
-//	else if (type.compare("opencv") == 0)
+        //	else if (type.compare("opencv") == 0)
 //		{
 //			if (opencvCameraManager.get() == 0)
 //			{
