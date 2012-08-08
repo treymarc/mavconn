@@ -32,6 +32,7 @@ This file is part of the MAVCONN project
 
 // BOOST includes
 
+#include <unistd.h>
 #include <cstdio>
 #include <iostream>
 #include <glib.h>

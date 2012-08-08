@@ -31,6 +31,7 @@
 
 #include <inttypes.h>
 #include <dc1394.h>
+#include <unistd.h>
 
 #include "PxCameraCapture.h"
 

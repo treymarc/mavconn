@@ -16,4 +16,4 @@ PIXHAWK_LINK_LIBRARIES(mavconn-sysctrl
   ${GLIBTOP_LIBRARY}
 )
 
-#ADD_SUBDIRECTORY(watchdog)
+ADD_SUBDIRECTORY(watchdog)

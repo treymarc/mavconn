@@ -94,7 +94,7 @@ IF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL
 # ADD_COMPILER_FLAGS("-mtune=pentium4 -march=pentium4 -ftree-vectorize -msse2 -ffast-math -fexpensive-optimizations -fomit-frame-pointer -funroll-loops" Release CACHE)
   ADD_COMPILER_FLAGS("-fomit-frame-pointer -ftree-vectorize -ftree-vectorizer-verbose=1" Release CACHE)
 ELSEIF (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7l")
-  ADD_COMPILER_FLAGS("-mtune=cortex-a9 -march=armv7-a -ftree-vectorize -mfpu=neon -mfloat-abi=softfp -fexpensive-optimizations -fomit-frame-pointer -funroll-loops -ftree-vectorizer-verbose=1 -pthread" Release CACHE)
+  SET_COMPILER_FLAGS("-O2 -mtune=cortex-a8 -march=armv7-a -ftree-vectorize -mfpu=neon -mfloat-abi=hard -fexpensive-optimizations -fomit-frame-pointer -funroll-loops -ftree-vectorizer-verbose=1 -pthread" Release CACHE)
 ENDIF ()
 
 # CMake doesn't seem to set the PIC flags right on certain 64 bit systems

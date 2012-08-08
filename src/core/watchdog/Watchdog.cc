@@ -1,3 +1,4 @@
+#undef __linux
 /*======================================================================
 
 MAVCONN Micro Air Vehicle Flying Robotics Toolkit

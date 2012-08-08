@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "PxFireflyStereoCamera.h"
 
 PxFireflyStereoCamera::PxFireflyStereoCamera(dc1394camera_t* _cameraLeft, dc1394camera_t* _cameraRight)

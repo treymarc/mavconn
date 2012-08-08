@@ -30,6 +30,7 @@
  *
  */
 
+#include <unistd.h>
 #include "PxFireflyCamera.h"
 
 const int kDMAbuffers = 10;
