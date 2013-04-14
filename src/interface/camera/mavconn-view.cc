@@ -129,27 +129,28 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 					fprintf(stderr, "# INFO: Time from capture to display: %llu ms for camera %llu\n", diff / 1000, client.getCameraID(msg));
 				}
 
-				//De-Bayer //xxx: detect if we have a color image
-				cv::Mat imgDeBayer;
-				cv::cvtColor(img, imgDeBayer, CV_BayerGB2BGR);
-				cv::Point center;
-				center.x = 200;
-				center.y = 400;
-				circle(imgDeBayer, center, 40, cv::Scalar( 0, 0, 255 ), 2, 8 ); //draw a circle to make sure that the correect image is displayed //xxx:remove
+				//xxx: detect if we have a color image
+				cv::Mat imgColor = img.reshape(4);
+				cv::Mat imgChannels[4];
+				split(imgColor, &(imgChannels[0]));
+				cv::Mat imgOutput;
+				merge(imgChannels, 3, imgOutput);
+//				cv::cvtColor(imgOutput, imgOutput, CV_RGB2BGR);
+
 
 				// Display if switched on
 	#ifndef NO_DISPLAY
 				if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
 				{
 					cv::namedWindow("Left Image (Forward Camera)");
-					cv::imshow("Left Image (Forward Camera)", imgDeBayer);
+					cv::imshow("Left Image (Forward Camera)", img);
 				}
 				else
 				{
 					cv::namedWindow("Left Image (Downward Camera)");
-					cv::imshow("Left Image (Downward Camera)", imgDeBayer);
+					cv::imshow("Left Image (Downward Camera)", imgOutput);
 					cv::namedWindow("Left Image (Downward Camera) original");
-					cv::imshow("Left Image (Downward Camera) original", img);
+					cv::imshow("Left Image (Downward Camera) original", img.reshape(4));
 				}
 	#endif
 
