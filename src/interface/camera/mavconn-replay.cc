@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
 		}
 		else if (do_images)
 		{
-			if (sync_image_left_it != images_left.end() && sync_image_right_it != images_right.end() &&
+			if (( (images_left.empty() || sync_image_left_it != images_left.end()) && (images_right.empty() ||  sync_image_right_it != images_right.end()) && !(images_right.empty() && images_left.empty())) &&
 				(sync_image_left_it->first >= startTimestamp || sync_image_right_it->first >= startTimestamp))
 			{
 				if (found_correct_timestamp == false)
