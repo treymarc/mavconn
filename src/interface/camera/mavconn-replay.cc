@@ -426,6 +426,13 @@ int main(int argc, char* argv[])
 					}
 				}
 			}
+			else
+			{
+				if (!images_left.empty())
+					++sync_image_left_it;
+				if (!images_right.empty())
+					++sync_image_right_it;
+			}
 		}
 
 		//don't publish IMAGE_AVAILABLE messages or if we did not find the right timestamped image yet
