@@ -234,7 +234,7 @@ PxBluefoxCamera::setSlave(void)
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
-    step->clocks_us.write(signalPulseWidth());
+    step->clocks_us.write(triggerPulseWidth());
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
@@ -299,7 +299,7 @@ PxBluefoxCamera::setExternalTrigger(void)
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
-    step->clocks_us.write(signalPulseWidth());
+    step->clocks_us.write(triggerPulseWidth());
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
@@ -352,7 +352,7 @@ PxBluefoxCamera::setFrameRate(float frameRate)
     int i = 0;
     mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
-    step->clocks_us.write(static_cast<int>(1000000.0 / frameRate) - signalPulseWidth());
+    step->clocks_us.write(static_cast<int>(1000000.0 / frameRate) - triggerPulseWidth());
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerSet);
@@ -360,7 +360,7 @@ PxBluefoxCamera::setFrameRate(float frameRate)
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
-    step->clocks_us.write(signalPulseWidth());
+    step->clocks_us.write(triggerPulseWidth());
 
     step = program->programStep(i++);
     step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
@@ -516,12 +516,14 @@ PxBluefoxCamera::getFramesPerSecond(void)
 }
 
 int
-PxBluefoxCamera::signalPulseWidth(void) const
+PxBluefoxCamera::triggerPulseWidth(void) const
 {
+    int rowLength = cameraSettings->aoiWidth.read();
+
     int pixelClock_KHz = cameraSettings->pixelClock_KHz.read();
     double pixelClock_MHz = static_cast<double>(pixelClock_KHz) / 1000.0;
 
-    double rowTime = 1388.0 / pixelClock_MHz;
+    double rowTime = static_cast<double>(rowLength) / pixelClock_MHz;
 
     // signal pulse width should be ten times the row time
     return static_cast<int>(round(rowTime * 10.0));

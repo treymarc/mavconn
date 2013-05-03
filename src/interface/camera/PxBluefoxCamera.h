@@ -33,7 +33,7 @@ private:
 
     float getFramesPerSecond(void);
 
-    int signalPulseWidth(void) const;
+    int triggerPulseWidth(void) const;
 
     void imageHandler(void);
 
