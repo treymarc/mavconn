@@ -8,57 +8,59 @@
 class PxBluefoxCamera : public PxCamera
 {
 public:
-	explicit PxBluefoxCamera(mvIMPACT::acquire::Device* _dev);
+    explicit PxBluefoxCamera(mvIMPACT::acquire::Device* _dev);
 
-	bool init(void);
-	void destroy(void);
+    bool init(void);
+    void destroy(void);
 
-	bool setConfig(const PxCameraConfig& config, bool master = true);
+    bool setConfig(const PxCameraConfig& config, bool master = true);
 
-	bool start(void);
-	bool stop(void);
+    bool start(void);
+    bool stop(void);
 
-	bool grabFrame(cv::Mat& image, uint32_t& skippedFrames,
-				   uint32_t& sequenceNum);
+    bool grabFrame(cv::Mat& image, uint32_t& skippedFrames,
+                   uint32_t& sequenceNum);
 
 private:
-	bool setSlave(void);
-	bool setExternalTrigger(void);
-	bool setFrameRate(float frameRate);
-	bool setMode(PxCameraConfig::Mode mode);
-	bool setExposureTime(uint32_t exposureTime);
-	bool setGain(uint32_t gain);
-	bool setGainDB(float gain_dB);
-	bool setPixelClock(uint32_t pixelClockKHz);
+    bool setSlave(void);
+    bool setExternalTrigger(void);
+    bool setFrameRate(float frameRate);
+    bool setMode(PxCameraConfig::Mode mode);
+    bool setExposureTime(uint32_t exposureTime);
+    bool setGain(uint32_t gain);
+    bool setGainDB(float gain_dB);
+    bool setPixelClock(uint32_t pixelClockKHz);
 
-	float getFramesPerSecond(void);
+    float getFramesPerSecond(void);
 
-	void imageHandler(void);
+    int signalPulseWidth(void) const;
 
-	bool convertToCvMat(const mvIMPACT::acquire::Request* request, cv::Mat& image);
+    void imageHandler(void);
 
-	mvIMPACT::acquire::Device* dev;
-	std::tr1::shared_ptr<mvIMPACT::acquire::FunctionInterface> functionInterface;
-	std::tr1::shared_ptr<mvIMPACT::acquire::CameraSettingsBlueFOX> cameraSettings;
-	std::tr1::shared_ptr<mvIMPACT::acquire::IOSubSystemBlueFOX> io;
-	std::tr1::shared_ptr<mvIMPACT::acquire::Statistics> stats;
+    bool convertToCvMat(const mvIMPACT::acquire::Request* request, cv::Mat& image);
 
-	Glib::Thread* imageThread;
-	bool imageAvailable;
-	Glib::Mutex imageMutex;
-	std::tr1::shared_ptr<Glib::Cond> imageAvailableCond;
-	bool exitImageThread;
+    mvIMPACT::acquire::Device* dev;
+    std::tr1::shared_ptr<mvIMPACT::acquire::FunctionInterface> functionInterface;
+    std::tr1::shared_ptr<mvIMPACT::acquire::CameraSettingsBlueFOX> cameraSettings;
+    std::tr1::shared_ptr<mvIMPACT::acquire::IOSubSystemBlueFOX> io;
+    std::tr1::shared_ptr<mvIMPACT::acquire::Statistics> stats;
 
-	cv::Mat image;
-	uint32_t imageSequenceNr;
+    Glib::Thread* imageThread;
+    bool imageAvailable;
+    Glib::Mutex imageMutex;
+    std::tr1::shared_ptr<Glib::Cond> imageAvailableCond;
+    bool exitImageThread;
 
-	float frameRate;
-	int timeout_ms;
+    cv::Mat image;
+    uint32_t imageSequenceNr;
 
-	uint64_t serialNum;
-	uint32_t lastSequenceNum;
+    float frameRate;
+    int timeout_ms;
 
-	friend class PxBluefoxStereoCamera;
+    uint64_t serialNum;
+    uint32_t lastSequenceNum;
+
+    friend class PxBluefoxStereoCamera;
 };
 
 #endif
