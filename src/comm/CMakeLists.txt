@@ -93,6 +93,8 @@ PIXHAWK_LINK_LIBRARIES(mavconn-gpsd
 PIXHAWK_EXECUTABLE(mavconn-imagestreamer mavconn-imagestreamer.cc)
 PIXHAWK_LINK_LIBRARIES(mavconn-imagestreamer
   mavconn_lcm
+  mavconn_shm
+  lcm
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OPENCV_CORE_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY}

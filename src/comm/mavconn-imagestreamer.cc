@@ -50,7 +50,8 @@ This file is part of the MAVCONN project
 // #include <sys/time.h>
 #include <time.h>
 
-#include "PxSharedMemClient.h"
+//#include "PxSharedMemClient.h"
+#include "interface/shared_mem/SHMImageClient.h"
 #include "mavconn.h"
 
 
@@ -72,6 +73,7 @@ lcm_t* lcmMavlink;
 mavlink_message_t tmp;
 mavlink_data_transmission_handshake_t req, ack;
 
+bool quit = false;
 /**
  * @brief Handle incoming MAVLink packets containing images
  */
@@ -80,27 +82,37 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	// Pointer to shared memory data
-	PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
+	std::vector<px::SHMImageClient>* clientVec = reinterpret_cast< std::vector<px::SHMImageClient>* >(user);
 
 	// Temporary memory for raw camera image
 	cv::Mat img( 480, 640, CV_8UC1 );
+	cv::Mat img2( 480, 640, CV_8UC1 );	// img2 not used.
+
+	for(size_t i = 0; i < clientVec->size(); ++i){
+		px::SHMImageClient& client = clientVec->at(i);
+                if ((client.getCameraConfig() & px::SHMImageClient::getCameraNo(msg)) != px::SHMImageClient::getCameraNo(msg))
+                         continue;
 
 	// Check if there are images
-	uint64_t camId = client->getCameraID(msg);
+	uint64_t camId = client.getCameraID(msg);
+
 	if (camId != 0)
 	{
 		// Copy one image from shared buffer
-		if (!client->sharedMemCopyImage(msg, img))
+		if (!client.readStereoImage(msg, img, img2))
 		{
-			cout << "No image could be retrieved, even camera ID was set." << endl;
-			exit(1);
+			if(!client.readMonoImage(msg,img))
+			{
+				continue;
+			}
 		}
+
 		captureImage = false;
 
 		// Check for valid jpg_quality in request and adjust if necessary
 		if (req.jpg_quality < 1 && req.jpg_quality > 100)
 		{
-			req.jpg_quality = 50;
+			req.jpg_quality = 100;
 		}
 
 		// Encode image as JPEG
@@ -117,6 +129,8 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 		if (ack.size % PACKET_PAYLOAD) { ++ack.packets; } // one more packet with the rest of data
 		ack.payload = static_cast<uint8_t>( PACKET_PAYLOAD );
 		ack.jpg_quality = req.jpg_quality;
+		ack.width = 640;
+		ack.height = 480;
 
 		mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
 		sendMAVLinkMessage(lcmMavlink, &tmp);
@@ -148,6 +162,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			if (verbose) printf("sent packet %02d successfully\n", i+1);
 		}
 	}
+	}
 }
 
 /**
@@ -156,6 +171,9 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
+	if(msg->sysid == 42)
+		captureImage = true;
 
 	if (msg->msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)
 	{
@@ -169,6 +187,16 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 	}
 }
 
+void
+signalHandler(int signal)
+{
+        if (signal == SIGINT)
+        {
+                fprintf(stderr, "# INFO: Quitting...\n");
+                quit = true;
+                exit(EXIT_SUCCESS);
+        }
+}
 
 void* lcm_wait(void* lcm_ptr)
 {
@@ -177,6 +205,16 @@ void* lcm_wait(void* lcm_ptr)
 	while (true)
 	{
 		lcm_handle (lcm);
+	}
+	return NULL;
+}
+
+void* lcm_image_wait(void* lcm_ptr)
+{
+	lcm_t* lcm = (lcm_t*)lcm_ptr;
+	while(1)
+	{	
+		lcm_handle(lcm);
 	}
 	return NULL;
 }
@@ -213,14 +251,21 @@ int main(int argc, char* argv[])
 	if (!lcmImage || !lcmMavlink)
 		exit(EXIT_FAILURE);
 
-	PxSharedMemClient* cam = new PxSharedMemClient();
-	mavconn_mavlink_msg_container_t_subscription_t * img_sub  = mavconn_mavlink_msg_container_t_subscribe (lcmImage, "IMAGES", &image_handler, cam);
+	std::vector<px::SHMImageClient> clientVec;
+	clientVec.resize(4);
+
+        clientVec.at(0).init(true, px::SHM::CAMERA_FORWARD_LEFT);
+        clientVec.at(1).init(true, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT);
+        clientVec.at(2).init(true, px::SHM::CAMERA_DOWNWARD_LEFT);
+        clientVec.at(3).init(true, px::SHM::CAMERA_DOWNWARD_LEFT, px::SHM::CAMERA_DOWNWARD_RIGHT);
+	mavconn_mavlink_msg_container_t_subscription_t * img_sub  = mavconn_mavlink_msg_container_t_subscribe (lcmImage, "IMAGES", &image_handler, &clientVec);
 	mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavconn_mavlink_msg_container_t_subscribe (lcmMavlink, "MAVLINK", &mavlink_handler, lcmMavlink);
 
 	cout << "MAVLINK client ready, waiting for data..." << endl;
 
 	// Creating thread for MAVLink handling
 	GThread* lcm_mavlinkThread;
+	GThread* lcm_imageThread;
 	GError* err;
 
 	if( !g_thread_supported() ) {
@@ -235,17 +280,18 @@ int main(int argc, char* argv[])
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err) ;
 	}
-	cout << "MAVLINK client ready, waiting for requests..." << endl;
 
-	// Start the image transmission
-	while (true)
+	if( (lcm_imageThread = g_thread_create((GThreadFunc)lcm_image_wait, (void*)lcmImage, TRUE, &err)) == NULL)
 	{
-		if (captureImage)
-		{
-			// blocking wait for image channel
-			lcm_handle(lcmImage);
-		}
+		cout << "Thread create failed: " << err->message << "!!" << endl;
+		g_error_free(err);
 	}
+		cout << "MAVLINK client ready, waiting for requests..." << endl;
+
+	signal(SIGINT, signalHandler);
+
+	while(!quit)
+		lcm_handle(lcmMavlink);
 
 	// Clean up
 	cout << "Stopping thread for image capture..." << endl;
@@ -257,7 +303,6 @@ int main(int argc, char* argv[])
 	mavconn_mavlink_msg_container_t_unsubscribe (lcmMavlink, comm_sub);
 	lcm_destroy (lcmImage);
 	lcm_destroy (lcmMavlink);
-	delete cam;
 
 	exit(EXIT_SUCCESS);
 }
