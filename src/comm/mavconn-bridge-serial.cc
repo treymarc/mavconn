@@ -154,8 +154,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 				int messageLength = mavlink_msg_to_send_buffer(buffer, msg);
 				if (debug) printf("Writing %d bytes\n", messageLength);
 				int written = write(fd, (char*)buffer, messageLength);
-				//ioctl(fd, TIOCFLUSH, FWRITE);
-				tcflush(fd, TCOFLUSH);
+				/* wait until all data has been written */
+				tcdrain(fd);
 				if (messageLength != written) fprintf(stderr, "ERROR: Wrote %d bytes but should have written %d\n", written, messageLength);
 			}
 		}
@@ -201,8 +201,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 				int messageLength = mavlink_msg_to_send_buffer(buffer, msg);
 				if (debug) printf("Writing %d bytes\n", messageLength);
 				int written = write(fd, (char*)buffer, messageLength);
-				//ioctl(fd, TIOCFLUSH, FWRITE);
-				tcflush(fd, TCOFLUSH);
+				/* wait until all data has been written */
+				tcdrain(fd);
 				if (messageLength != written) fprintf(stderr, "ERROR: Wrote %d bytes but should have written %d\n", written, messageLength);
 		}
 
@@ -463,7 +463,7 @@ void* serial_wait(void* serial_ptr)
 		mavlink_message_t message;
 		mavlink_status_t status;
 		uint8_t msgReceived = false;
-		//tcflush(fd, TCIFLUSH);
+
 		if (read(fd, &cp, 1) > 0)
 		{
 			// Check if a message could be decoded, return the message in case yes
