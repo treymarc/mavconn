@@ -135,7 +135,6 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 				split(imgColor, &(imgChannels[0]));
 				cv::Mat imgOutput;
 				merge(imgChannels, 3, imgOutput);
-//				cv::cvtColor(imgOutput, imgOutput, CV_RGB2BGR);
 
 
 				// Display if switched on
@@ -149,8 +148,6 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 				{
 					cv::namedWindow("Left Image (Downward Camera)");
 					cv::imshow("Left Image (Downward Camera)", imgOutput);
-					cv::namedWindow("Left Image (Downward Camera) original");
-					cv::imshow("Left Image (Downward Camera) original", img.reshape(4));
 				}
 	#endif
 

@@ -577,19 +577,6 @@ PxBluefoxCamera::convertToCvMat(const mvIMPACT::acquire::Request* request, cv::M
         cv::Mat temp(cv::Size(request->imageWidth.read()*request->imagePixelPitch.read(), request->imageHeight.read()),
                  CV_8UC1, request->imageData.read(), request->imageLinePitch.read());
 
-//	printf("imageSize: %d\n",  request->imageSize.read());
-//	printf("imageWidth: %d\n",  request->imageWidth.read());
-//	printf("imageHeight: %d\n",  request->imageHeightTotal.read());
-//	printf("imageWidthTotal: %d\n",  request->imageWidthTotal.read());
-//	printf("imageHeightTotal: %d\n",  request->imageHeight.read());
-//	printf("imageLinePitch 0: %d\n",  request->imageLinePitch.read(0));
-//	printf("imageLinePitch 1: %d\n",  request->imageLinePitch.read(1));
-//	printf("imageLinePitch 2: %d\n",  request->imageLinePitch.read(2));
-//	printf("imagePixelPitch: %d\n",  request->imagePixelPitch.read());
-//	printf("imageChannelCount: %d\n",  request->imageChannelCount.read());
-//	printf("imageBytesPerPixel: %d\n",  request->imageBytesPerPixel.read());
-//	printf("Temp size: %d, %d\n", temp.size().height, temp.size().width);
-
 	//if the given image has not the same format release its data and allocate new one
 	temp.reshape(1).copyTo(image);
 
