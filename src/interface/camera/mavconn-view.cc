@@ -129,14 +129,6 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 					fprintf(stderr, "# INFO: Time from capture to display: %llu ms for camera %llu\n", diff / 1000, client.getCameraID(msg));
 				}
 
-				//xxx: detect if we have a color image
-				cv::Mat imgColor = img.reshape(4);
-				cv::Mat imgChannels[4];
-				split(imgColor, &(imgChannels[0]));
-				cv::Mat imgOutput;
-				merge(imgChannels, 3, imgOutput);
-
-
 				// Display if switched on
 	#ifndef NO_DISPLAY
 				if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
@@ -147,7 +139,7 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 				else
 				{
 					cv::namedWindow("Left Image (Downward Camera)");
-					cv::imshow("Left Image (Downward Camera)", imgOutput);
+					cv::imshow("Left Image (Downward Camera)", img);
 				}
 	#endif
 
