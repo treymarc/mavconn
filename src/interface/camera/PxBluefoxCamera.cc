@@ -392,13 +392,13 @@ PxBluefoxCamera::setMode(PxCameraConfig::Mode mode)
             if (cameraSettings->autoControlParameters.isAvailable())
             {
                 cameraSettings->autoControlParameters.controllerSpeed.write(mvIMPACT::acquire::acsUserDefined);
-                cameraSettings->autoControlParameters.controllerGain.write(0.2);
+                cameraSettings->autoControlParameters.controllerGain.write(0.8);
                 cameraSettings->autoControlParameters.controllerIntegralTime_ms.write(1000.0);
                 cameraSettings->autoControlParameters.controllerDerivativeTime_ms.write(0.0);
                 cameraSettings->autoControlParameters.controllerDelay_Images.write(0);
-                cameraSettings->autoControlParameters.exposeLowerLimit_us.write(100);
-                cameraSettings->autoControlParameters.exposeUpperLimit_us.write(15000);
-                cameraSettings->autoControlParameters.desiredAverageGreyValue.write(128);
+                cameraSettings->autoControlParameters.exposeLowerLimit_us.write(50);
+                cameraSettings->autoControlParameters.exposeUpperLimit_us.write(25000);
+                cameraSettings->autoControlParameters.desiredAverageGreyValue.write(75);
             }
 
             cameraSettings->autoControlMode.write(mvIMPACT::acquire::acmStandard);
@@ -574,10 +574,21 @@ PxBluefoxCamera::imageHandler(void)
 bool
 PxBluefoxCamera::convertToCvMat(const mvIMPACT::acquire::Request* request, cv::Mat& image)
 {
-    cv::Mat temp(cv::Size(request->imageWidth.read(), request->imageHeight.read()),
-                 CV_8UC1, request->imageData.read(), request->imageLinePitch.read());
+    // The PixelPitch is 1 for a gray camera and 4 for a color camera
+    cv::Mat temp(cv::Size(request->imageWidth.read()*request->imagePixelPitch.read(),request->imageHeight.read()),
+            CV_8UC1, request->imageData.read());
 
-    //if the given image has not the same format release its data and allocate new one
+    // The color image needs some reordering
+    if (request->imageChannelCount.read() == 3)
+    {
+        // Convert the 1D array to 4 single channels
+        temp = temp.reshape(4);
+        cv::Mat tempChannels[4];
+        // Get rid of the empty channel 4
+        split(temp, &(tempChannels[0]));
+        merge(tempChannels, 3, temp);
+    }
+
     temp.copyTo(image);
 
     return true;
