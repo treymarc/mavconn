@@ -112,7 +112,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 		// Check for valid jpg_quality in request and adjust if necessary
 		if (req.jpg_quality < 1 || req.jpg_quality > 100)
 		{
-			req.jpg_quality = 100;
+			req.jpg_quality = 60;
 		}
 
 		// Encode image as JPEG
