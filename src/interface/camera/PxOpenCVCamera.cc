@@ -123,9 +123,8 @@ PxOpenCVCamera::grabFrame(cv::Mat& image, uint32_t& skippedFrames,
 bool
 PxOpenCVCamera::setFrameRate(float frameRate)
 {
-
-
-	return true;
+	
+	return camera->set(CV_CAP_PROP_FPS,frameRate);
 }
 
 bool
