@@ -126,7 +126,7 @@ SHMImageClient::getCameraID(const mavlink_message_t* msg)
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
 		// Instantly return if MAVLink message did not contain an image
-		return 0;
+		return -1;
 	}
 	else
 	{

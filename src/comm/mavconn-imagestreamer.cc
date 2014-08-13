@@ -96,7 +96,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 	// Check if there are images
 	uint64_t camId = client.getCameraID(msg);
 
-	if (camId != 0)
+	if (camId >= 0)
 	{
 		// Copy one image from shared buffer
 		if (!client.readStereoImage(msg, img, img2))
