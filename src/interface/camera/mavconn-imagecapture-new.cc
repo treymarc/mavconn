@@ -592,18 +592,12 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 	if(recordData && !bPause)
 	{
 		//write into mavlink logfile
-		const int len = MAVLINK_MAX_PACKET_LEN+sizeof(uint64_t);
 		uint8_t buf[len];
 		uint64_t time = getSystemTimeUsecs();
-		memcpy(buf, (void*)&time, sizeof(uint64_t));
-		mavlink_msg_to_send_buffer(buf+sizeof(uint64_t), mavlink_msg);
-		mavlinkFile.write((char *)buf, len);
-
-		if (mavlink_msg->msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
-		{
-			mavlinkFile.write(reinterpret_cast<char*>(container->extended_payload),
-							  container->extended_payload_len);
-		}
+		uint64_t network_order_time = htonull(time);
+		memcpy(buf, (void*)&network_order_time, sizeof(uint64_t));
+		unsigned len = mavlink_msg_to_send_buffer(buf+sizeof(uint64_t), mavlink_msg);
+		mavlinkFile.write((char *)buf, len + sizeof(uint64_t));
 	}
 }
 
