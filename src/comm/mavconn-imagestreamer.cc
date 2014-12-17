@@ -268,20 +268,16 @@ int main(int argc, char* argv[])
 	GThread* lcm_imageThread;
 	GError* err;
 
-	if( !g_thread_supported() ) {
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
 
 	// Start thread for handling messages on the MAVLINK channel
 	cout << "Starting thread for mavlink handling..." << endl;
-	if( (lcm_mavlinkThread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcmMavlink, TRUE, &err)) == NULL)
+	if( (lcm_mavlinkThread = g_thread_try_new("MAVLINK", (GThreadFunc)lcm_wait, (void *)lcmMavlink, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err) ;
 	}
 
-	if( (lcm_imageThread = g_thread_create((GThreadFunc)lcm_image_wait, (void*)lcmImage, TRUE, &err)) == NULL)
+	if( (lcm_imageThread = g_thread_try_new("IMG", (GThreadFunc)lcm_image_wait, (void*)lcmImage, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err);

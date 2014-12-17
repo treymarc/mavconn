@@ -361,7 +361,7 @@ PxCameraCapture::init(uint32_t serialNum, bool special)
 
 	//set video mode to 640x480 Mono 8
 	printf("Set video mode to 640x480x8\n");
-	error = dc1394_video_set_mode(camera, DC1394_VIDEO_MODE_640x480_MONO8);
+	error = dc1394_video_set_mode(camera, DC1394_VIDEO_MODE_640x480_YUV422);
 	if (error != DC1394_SUCCESS) { printf("Could not set video mode for camera 1\n"); destroy(); return CAMERA_FAILURE; }
 
 	if (special)

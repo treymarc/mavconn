@@ -101,9 +101,9 @@ mavlink_mission_item_t* next_sweep_wp = NULL;
 GError *error = NULL;
 GThread* waypoint_lcm_thread = NULL;
 
-static GMutex* main_mutex = NULL;
-static GCond* cond_position_received = NULL;
-static GCond* cond_pattern_detected = NULL;
+static GMutex main_mutex;
+static GCond cond_position_received;
+static GCond cond_pattern_detected;
 
 GThread* search_thread = NULL;
 GThread* sweep_thread = NULL;
@@ -762,12 +762,12 @@ void* search_thread_func (gpointer n_det)
 	while (1)
 	{
 		if (verbose) printf("here 2\n");
-		g_cond_wait(cond_pattern_detected,main_mutex);
+		g_cond_wait(&cond_pattern_detected,&main_mutex);
 		if (verbose) printf("here 3\n");
 		if (terminate_threads == true || search_state == PX_WPP_SEARCH_END)
 		{
 			search_state = PX_WPP_SEARCH_IDLE;
-			g_mutex_unlock(main_mutex);
+			g_mutex_unlock(&main_mutex);
 			return NULL;
 		}
 		else if (search_state == PX_WPP_SEARCH_RESET)
@@ -840,14 +840,14 @@ void* sweep_thread_func (gpointer sweep_wp)
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
 	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2);
-	    		g_cond_wait(cond_position_received,main_mutex);
+	    		g_cond_wait(&cond_position_received,&main_mutex);
 	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true) //terminate thread if current waypoint changed
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
 					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
 					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
-					g_mutex_unlock(main_mutex);
+					g_mutex_unlock(&main_mutex);
 					return NULL;
 				}
 
@@ -868,14 +868,14 @@ void* sweep_thread_func (gpointer sweep_wp)
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
 	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2+1);
-	    		g_cond_wait(cond_position_received,main_mutex);
+	    		g_cond_wait(&cond_position_received,&main_mutex);
 	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true)
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
 					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
 					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
-					g_mutex_unlock(main_mutex);
+					g_mutex_unlock(&main_mutex);
 					return NULL;
 				}
 
@@ -902,14 +902,14 @@ void* sweep_thread_func (gpointer sweep_wp)
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
 	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2);
-	    		g_cond_wait(cond_position_received,main_mutex);
+	    		g_cond_wait(&cond_position_received,&main_mutex);
 	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true) //terminate thread if current waypoint changed
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
 					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
 					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
-					g_mutex_unlock(main_mutex);
+					g_mutex_unlock(&main_mutex);
 					return NULL;
 				}
 
@@ -930,14 +930,14 @@ void* sweep_thread_func (gpointer sweep_wp)
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
 	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2+1);
-	    		g_cond_wait(cond_position_received,main_mutex);
+	    		g_cond_wait(&cond_position_received,&main_mutex);
 	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true)
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
 					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
 					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
-					g_mutex_unlock(main_mutex);
+					g_mutex_unlock(&main_mutex);
 					return NULL;
 				}
 
@@ -956,7 +956,7 @@ void* sweep_thread_func (gpointer sweep_wp)
 		sweep_state = PX_WPP_SWEEP_IDLE;
 		if (verbose) printf("Sweep: failed. Wrong parameters. Thread terminated.\n");
 	}
-	g_mutex_unlock(main_mutex);
+	g_mutex_unlock(&main_mutex);
 	return NULL;
 }
 
@@ -1246,11 +1246,6 @@ void handle_mission (uint16_t seq, uint64_t now)
 	    			//Kill old patternrec and start a new one, if necessary
 	    		}
 
-		    	if( !g_thread_supported() )
-		    	{
-		    		g_thread_init(NULL); // Only initialize g thread if not already done
-		    	}
-
 		    	int16_t detections_needed = (int16_t) cur_wp->param2;
 	    		int16_t default_value = 1;
 	    		gpointer ptr = (gpointer) &default_value;
@@ -1259,7 +1254,7 @@ void handle_mission (uint16_t seq, uint64_t now)
 		    		ptr = (gpointer) &detections_needed;
 		    	}
 
-		    	if( (search_thread = g_thread_create(search_thread_func, ptr, TRUE, &error)) == NULL)
+		    	if( (search_thread = g_thread_try_new("SEARHC", search_thread_func, ptr, &error)) == NULL)
 		    	{
 		    		printf("Thread creation failed: %s!!\n", error->message );
 		    		g_error_free ( error ) ;
@@ -1306,7 +1301,7 @@ void handle_mission (uint16_t seq, uint64_t now)
 				else
 				{
 					search_state = PX_WPP_SEARCH_END;
-					g_cond_broadcast(cond_pattern_detected); //fake condition broadcast in order to wake the search thread for termination
+					g_cond_broadcast(&cond_pattern_detected); //fake condition broadcast in order to wake the search thread for termination
 		    		next_wp_id = seq + 1;
 				}
 	    	}
@@ -1341,14 +1336,10 @@ void handle_mission (uint16_t seq, uint64_t now)
 	    {
 	    	if (sweep_state == PX_WPP_SWEEP_IDLE)
 	    	{
-		    	if( !g_thread_supported() )
-		    	{
-		    		g_thread_init(NULL); // Only initialize g thread if not already done
-		    	}
 
 	    		gpointer ptr = (gpointer) cur_wp;
 
-		    	if( (sweep_thread = g_thread_create(sweep_thread_func, ptr, TRUE, &error)) == NULL)
+		    	if( (sweep_thread = g_thread_try_new("SWEEP", sweep_thread_func, ptr, &error)) == NULL)
 		    	{
 		    		printf("Thread creation failed: %s!!\n", error->message );
 		    		g_error_free ( error ) ;
@@ -1829,7 +1820,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                {
 	                    mavlink_msg_local_position_ned_decode(msg, &last_known_pos);
 
-	                    g_cond_broadcast (cond_position_received);
+	                    g_cond_broadcast (&cond_position_received);
 
 	                    if (debug) printf("Received new position: x: %f | y: %f | z: %f\n", last_known_pos.x, last_known_pos.y, last_known_pos.z);
 	                    struct timeval tv;
@@ -1857,7 +1848,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 					{
 						last_detected_pattern = pd;
 						if(verbose) printf("Found it! - confidence: %f, detect: %i, file: %s, type: %i\n",pd.confidence,pd.detected,pd.file,pd.type);
-						g_cond_broadcast (cond_pattern_detected);
+						g_cond_broadcast (&cond_pattern_detected);
 					}
 				}
 				break;
@@ -1990,7 +1981,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 {
 	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
-	g_mutex_lock(main_mutex);
+	g_mutex_lock(&main_mutex);
 
     // Handle param messages
     paramClient->handleMAVLinkPacket(msg);
@@ -2017,7 +2008,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 
     handle_communication(msg, now);
 
-    g_mutex_unlock(main_mutex);
+    g_mutex_unlock(&main_mutex);
 }
 
 void* lcm_thread_func (gpointer lcm_ptr)
@@ -2108,15 +2099,10 @@ int main(int argc, char* argv[])
     /**********************************
     * Run the LCM thread
     **********************************/
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
 
 	gpointer lcm_ptr = (gpointer) lcm;
 
-	if( (waypoint_lcm_thread = g_thread_create(lcm_thread_func, lcm_ptr, TRUE, &error)) == NULL)
+	if( (waypoint_lcm_thread = g_thread_try_new("WAYPOINT", lcm_thread_func, lcm_ptr, &error)) == NULL)
 	{
 		printf("Thread creation failed: %s!!\n", error->message );
 		g_error_free ( error ) ;
@@ -2125,24 +2111,24 @@ int main(int argc, char* argv[])
     /**********************************
     * Initialize mutex(es) and Condition(s)
     **********************************/
-	if (!main_mutex)
-	{
-		main_mutex = g_mutex_new();
-		printf("Mutex created\n");
-	}
+//	if (!main_mutex)
+//	{
+//		main_mutex = g_mutex_new();
+//		printf("Mutex created\n");
+//	}
 
-	if (!cond_position_received)
-	{
-		cond_position_received = g_cond_new();
-		cond_pattern_detected = g_cond_new();
-		printf("Conditions created\n");
-	}
+//	if (!cond_position_received)
+//	{
+//		cond_position_received = g_cond_new();
+//		cond_pattern_detected = g_cond_new();
+//		printf("Conditions created\n");
+//	}
 
     /**********************************
     * Read waypoints from file and
     * set the new current waypoint
     **********************************/
-	g_mutex_lock(main_mutex);
+	g_mutex_lock(&main_mutex);
 	wpp_state = PX_WPP_RUNNING;
     if (waypointfile.length())
     {
@@ -2175,7 +2161,7 @@ int main(int argc, char* argv[])
         }
 
     }
-    g_mutex_unlock(main_mutex);
+    g_mutex_unlock(&main_mutex);
 
     printf("WAYPOINTPLANNER INITIALIZATION DONE, RUNNING...\n");
 
@@ -2186,9 +2172,9 @@ int main(int argc, char* argv[])
     {
         if(current_active_wp_id != (uint16_t)-1 && (nosetpointonhold==false || wpp_state != PX_WPP_ON_HOLD))
         {
-        	g_mutex_lock(main_mutex);
+        	g_mutex_lock(&main_mutex);
             send_setpoint();
-            g_mutex_unlock(main_mutex);
+            g_mutex_unlock(&main_mutex);
         }
         usleep(paramClient->getParamValue("SETPOINTDELAY")*1000000);
     }

@@ -86,15 +86,15 @@ typedef struct
 	uint8_t subsys_errors;
 } system_state_t;
 
-system_state_t static inline mk_system_state_t()
-{
-	system_state_t s;
-	s.core = MAV_STATE_UNINIT;
-	s.comm = COMM_STATE_UNINIT;
-	s.comm_errors = 0;
-	s.subsys_errors = 0;
-	return s;
-}
+//system_state_t static inline mk_system_state_t()
+//{
+//	system_state_t s;
+//	s.core = MAV_STATE_UNINIT;
+//	s.comm = COMM_STATE_UNINIT;
+//	s.comm_errors = 0;
+//	s.subsys_errors = 0;
+//	return s;
+//}
 
 
 // Settings
@@ -328,13 +328,7 @@ int main (int argc, char ** argv)
 	GThread* lcm_thread;
 	GError* err;
 
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
-
-	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (lcm_thread = g_thread_try_new("LCM", (GThreadFunc)lcm_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Thread create failed: %s!!\n", err->message );
 		g_error_free ( err ) ;
@@ -351,9 +345,9 @@ int main (int argc, char ** argv)
 	uint64_t old_total = cpu.total;
 	uint64_t old_idle = cpu.idle;
 
-	uint8_t baseMode;
-	uint8_t customMode;
-	uint8_t systemStatus;
+	uint8_t baseMode = 0;
+	uint8_t customMode = 0;
+	uint8_t systemStatus = 0;
 
 	printf("\nPX SYSTEM CONTROL STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, compid);
 

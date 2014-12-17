@@ -7,7 +7,7 @@ class PCCallback
 {
     public:
         PCCallback(void* userData = 0) : userData_(userData) {}
-
+        virtual ~PCCallback(){}
         virtual void operator()(const std::string& name, float value) = 0;
 
     protected:

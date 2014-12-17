@@ -83,8 +83,8 @@ bool useStereo;
 bool recordData = false;
 bool bPause = false;
 
-static GMutex *image_grabbed_mutex = NULL;
-GCond *image_grabbed_cond = NULL;
+static GMutex image_grabbed_mutex;
+static GCond image_grabbed_cond;
 bool image_grabbed = false;
 
 //image information to store
@@ -104,13 +104,13 @@ bool imageMetaContainsGroundDistance = false;
 static void image_writer (void)
 {
 	//get lock for condition
-	g_mutex_lock(image_grabbed_mutex);
+	g_mutex_lock(&image_grabbed_mutex);
 
 	while(1)
 	{
 		//unlock mutex and wait for condition
 		while (!image_grabbed)
-			g_cond_wait(image_grabbed_cond, image_grabbed_mutex);
+			g_cond_wait(&image_grabbed_cond, &image_grabbed_mutex);
 
 		//now store the new image - this can take as long as it is necessary - but all incoming images during this time will get dropped
 
@@ -151,7 +151,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 	if (recordData && !bPause)
 	{
 		//try to get the lock, if it is still locked by image writer, skip the current image (this is for very slow computers)
-		if(g_mutex_trylock(image_grabbed_mutex))
+		if(g_mutex_trylock(&image_grabbed_mutex))
 		{
 			const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
@@ -230,8 +230,8 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 
 			//signal to image_writer thread that a new image can be stored
 			image_grabbed = true;
-			g_cond_signal(image_grabbed_cond);
-			g_mutex_unlock(image_grabbed_mutex);
+			g_cond_signal(&image_grabbed_cond);
+			g_mutex_unlock(&image_grabbed_mutex);
 			g_thread_yield();
 		}
 		else
@@ -518,22 +518,18 @@ int main(int argc, char* argv[])
 	GThread* lcm_imageWriterThread;
 	GError* err;
 
-	if( !g_thread_supported() ) {
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
-	if (!image_grabbed_mutex)
-	{
-		image_grabbed_mutex = g_mutex_new();
-	}
+//	if (!image_grabbed_mutex)
+//	{
+//		image_grabbed_mutex = g_mutex_new();
+//	}
 
-	if (!image_grabbed_cond)
-	{
-		image_grabbed_cond = g_cond_new();
-	}
+//	if (!image_grabbed_cond)
+//	{
+//		image_grabbed_cond = g_cond_new();
+//	}
 
 	// thread for IMAGE channel
-	if( (lcm_imageThread = g_thread_create((GThreadFunc)lcm_image_wait, (void *)lcmImage, TRUE, &err)) == NULL)
+	if( (lcm_imageThread = g_thread_try_new("LCMIMG", (GThreadFunc)lcm_image_wait, (void *)lcmImage, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err);
@@ -541,7 +537,7 @@ int main(int argc, char* argv[])
 	}
 
 	// thread for image_writer
-	if( (lcm_imageWriterThread = g_thread_create((GThreadFunc)image_writer, NULL, TRUE, &err)) == NULL)
+	if( (lcm_imageWriterThread = g_thread_try_new("LCMIMGCP", (GThreadFunc)image_writer, NULL, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err);

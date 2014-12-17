@@ -113,13 +113,8 @@ int main (int argc, char ** argv)
 	GThread* lcm_thread;
 	GError* err;
 
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
 
-	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (lcm_thread = g_thread_try_new("LCM",(GThreadFunc)lcm_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Thread create failed: %s!!\n", err->message );
 		g_error_free ( err ) ;

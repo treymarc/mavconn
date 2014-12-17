@@ -351,9 +351,9 @@ int main(int argc, char* argv[])
 					if (debug)
 					{
 #if (GPSD_API_MAJOR_VERSION > 3)
-						printf(" GPS FIX: lat: %f lon: %f alt: %f (%d/%d satellites used)\n", gps.lat, gps.lon, gps.alt, gpsdata->satellites_used, gpsdata->satellites_visible);
+						printf(" GPS FIX: lat: %f lon: %f alt: %f (%d/%d satellites used)\n", (float)gps.lat, (float)gps.lon, (float)gps.alt, gpsdata->satellites_used, gpsdata->satellites_visible);
 #else
-						printf(" GPS FIX: lat: %f lon: %f alt: %f (%d/%d satellites used)\n", gps.lat, gps.lon, gps.alt, gpsdata->satellites_used, gpsdata->satellites);
+						printf(" GPS FIX: lat: %f lon: %f alt: %f (%d/%d satellites used)\n", (float)gps.lat, (float)gps.lon, (float)gps.alt, gpsdata->satellites_used, gpsdata->satellites);
 #endif
 
 					}

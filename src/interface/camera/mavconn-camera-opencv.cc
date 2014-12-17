@@ -1078,6 +1078,7 @@ int main(int argc, char* argv[])
 		lcmThread->join();
 		//imageThread->join();
 		usleep(1000000); //instead of joining which can hang forever when camera crashed just sleep 100ms
+
 	}
 
 	// Disconnect from LCM

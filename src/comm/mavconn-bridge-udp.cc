@@ -112,7 +112,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		{
 			printf("(SYS: %d/COMP: %d/LCM->UDP) Received message with ID %u from LCM with %i payload bytes and %i total length\n",
 					msg->sysid, msg->compid, msg->msgid, msg->len, messageLength);
-			for (int i = 0; i < messageLength; i++)
+			for (uint32_t i = 0; i < messageLength; i++)
 			{
 				fprintf(stderr, "%02x ", buf[i]);
 			}
@@ -140,7 +140,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		{
 			printf("(SYS: %d/COMP: %d/LCM->UDP) Received message with ID %u from LCM with %d payload bytes and %u total length\n",
 					msg->sysid, msg->compid, msg->msgid, msg->len + container->extended_payload_len, extendedMessageLength);
-			for (int i = 0; i < messageLength; i++)
+			for (uint32_t i = 0; i < messageLength; i++)
 			{
 				fprintf(stderr, "%02x ", buf[i]);
 			}
@@ -343,19 +343,14 @@ int main(int argc, char* argv[])
 	GThread* udp_thread;
 	GError* err;
 
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
 
-	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (lcm_thread = g_thread_try_new("LCM", (GThreadFunc)lcm_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Thread creation failed: %s!!\n", err->message );
 		g_error_free ( err ) ;
 	}
 
-	if( (udp_thread = g_thread_create((GThreadFunc)udp_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (udp_thread = g_thread_try_new("UDP", (GThreadFunc)udp_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Thread creation failed: %s!!\n", err->message );
 		g_error_free ( err ) ;

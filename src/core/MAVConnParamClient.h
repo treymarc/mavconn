@@ -92,7 +92,7 @@ public:
 			if (verbose) printf("MAVConnParamClient: Send requested parameter now..\n");
 			mavlink_param_request_read_t read;
 			mavlink_msg_param_request_read_decode(msg, &read);
-			mavlink_message_t response;
+		//	mavlink_message_t response;
 
 			uint16_t i = 0;
 			PxParameterMap::const_iterator iter = params.begin();
@@ -233,7 +233,7 @@ public:
 
 	void printParams()
 	{
-		std::tr1::hash< std::string > hashfunc = params.hash_function();
+		//std::tr1::hash< std::string > hashfunc = params.hash_function();
 		//	    hashmap::const_iterator e;
 		//	    for( hashmap::const_iterator i = params.begin(), e = params.end() ; i != e ; ++i )
 		//	    {

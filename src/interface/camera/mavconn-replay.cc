@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 	printf("mavconn-replay: Start playing logfile %s...\n", logfile.c_str());
 
 	if(startTimestamp > 0)
-		printf("trying to skip to timestamp %llu...\n", startTimestamp);
+		printf("trying to skip to timestamp %lu...\n", startTimestamp);
 
 	GTimeVal gtime;
 	g_get_current_time(&gtime);
@@ -338,7 +338,7 @@ int main(int argc, char* argv[])
 				if (it == images_left.end())
 				{
 					// Image not found
-					if (verbose) printf("Have triggering message, but missing LEFT frame for timestamp %llu!\n", itrg.timestamp);
+					if (verbose) printf("Have triggering message, but missing LEFT frame for timestamp %lu!\n", itrg.timestamp);
 				}
 				else
 				{
@@ -354,7 +354,7 @@ int main(int argc, char* argv[])
 					if (it == images_right.end())
 					{
 						// Image not found
-						if (verbose) printf("Have triggering message and stereo ON, but missing RIGHT frame for timestamp %llu!\n", itrg.timestamp);
+						if (verbose) printf("Have triggering message and stereo ON, but missing RIGHT frame for timestamp %lu!\n", itrg.timestamp);
 					}
 					else
 					{

@@ -670,19 +670,13 @@ int main(int argc, char* argv[])
 	GThread* lcm_imageWriterThread;
 	GError* err;
 
-	// Only initialize g thread if not already done
-	if(!g_thread_supported())
-	{
-		g_thread_init(NULL);
-	}
-
 	if (!image_write_queue)
 	{
 		image_write_queue = g_async_queue_new();
 	}
 
 	// thread for IMAGE channel
-	if( (lcm_imageThread = g_thread_create((GThreadFunc)lcm_image_wait, (void *)lcmImage, TRUE, &err)) == NULL)
+	if( (lcm_imageThread = g_thread_try_new("LCMIMG", (GThreadFunc)lcm_image_wait, (void *)lcmImage, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err);
@@ -690,7 +684,7 @@ int main(int argc, char* argv[])
 	}
 
 	// thread for image_writer
-	if( (lcm_imageWriterThread = g_thread_create((GThreadFunc)image_writer, NULL, TRUE, &err)) == NULL)
+	if( (lcm_imageWriterThread = g_thread_try_new("LCMIMGCP", (GThreadFunc)image_writer, NULL, &err)) == NULL)
 	{
 		cout << "Thread create failed: " << err->message << "!!" << endl;
 		g_error_free(err);

@@ -112,7 +112,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 						    // This is a response to a ping request
 							uint64_t sendTime = emitTimes.at(ping.seq);
 							uint64_t roundTrip = r_timestamp - sendTime;
-							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %llu\n", msg->sysid, msg->compid, roundTrip);
+							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %lu\n", msg->sysid, msg->compid, roundTrip);
 						}
 				}
 			}
@@ -187,17 +187,12 @@ int main(int argc, char* argv[])
 	GThread* lcm_thread;
 	GError* err;
 
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
 
 	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
 			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, (void*)lcm);
 	if (!silent) printf("Subscribed to %s LCM channel.\n", MAVLINK_MAIN);
 
-	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (lcm_thread = g_thread_try_new("LCm", (GThreadFunc)lcm_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Failed to create LCM handling thread: %s!!\n", err->message );
 		g_error_free ( err ) ;

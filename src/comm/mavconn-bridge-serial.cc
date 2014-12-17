@@ -608,12 +608,6 @@ int main(int argc, char* argv[])
 	GThread* serial_thread;
 	GError* err;
 
-	if( !g_thread_supported() )
-	{
-		g_thread_init(NULL);
-		// Only initialize g thread if not already done
-	}
-
 	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
 			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, (void*)fd_ptr);
 	if (!silent) printf("Subscribed to %s LCM channel.\n", "MAVLINK");
@@ -621,14 +615,14 @@ int main(int argc, char* argv[])
 	// Run indefinitely while the LCM and serial threads handle the data
 	if (!silent) printf("\nREADY, waiting for serial/LCM data.\n");
 
-	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
+	if( (lcm_thread = g_thread_try_new("LCM",(GThreadFunc)lcm_wait, (void *)lcm, &err)) == NULL)
 	{
 		printf("Failed to create LCM handling thread: %s!!\n", err->message );
 		g_error_free ( err ) ;
 	}
 
 
-	if( (serial_thread = g_thread_create((GThreadFunc)serial_wait, (void *)fd_ptr, TRUE, &err)) == NULL)
+	if( (serial_thread = g_thread_try_new("SERIAL",(GThreadFunc)serial_wait, (void *)fd_ptr, &err)) == NULL)
 	{
 		printf("Failed to create serial handling thread: %s!!\n", err->message );
 		g_error_free ( err ) ;

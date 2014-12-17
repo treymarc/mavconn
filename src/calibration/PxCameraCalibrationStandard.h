@@ -55,7 +55,7 @@ class PxCameraCalibrationStandard : public PxCameraCalibration
 {
 public:
 	PxCameraCalibrationStandard(const char *filename);
-
+	virtual ~PxCameraCalibrationStandard(){};
 	/** @brief Creates an undistortion mapping for cvRemap. */
 	virtual void initUndistortMap(cv::Mat &rMapX, cv::Mat &rMapY) const;
 
